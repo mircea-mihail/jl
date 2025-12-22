@@ -1,5 +1,5 @@
 use rand::Rng;
-use std::path::PathBuf;
+use std::path::Path;
 
 use std::fs;
 use std::io;
@@ -12,7 +12,7 @@ const BIG_QUESTION_CHANCE: f64 = 0.5;
 // const BIG_QUESTION_CHANCE: f64 = 0.1;
 
 // refactor to use an iterator that only reads until endl
-fn get_question_from_type(questions_file_path: &PathBuf, type_to_get: QuestionType, question_idx: i64) -> io::Result<Question> {
+fn get_question_from_type(questions_file_path: &Path, type_to_get: QuestionType, question_idx: i64) -> io::Result<Question> {
     let all_questions = fs::read_to_string(questions_file_path)?;
     let all_questions_it = all_questions.split("\n");
 
@@ -32,7 +32,7 @@ fn get_question_from_type(questions_file_path: &PathBuf, type_to_get: QuestionTy
     Ok(Question::default())
 }
 
-fn get_questions_counts(questions_file_path: &PathBuf) -> io::Result<QuestionsCount> {
+fn get_questions_counts(questions_file_path: &Path) -> io::Result<QuestionsCount> {
     let mut q_count: QuestionsCount = QuestionsCount{short:0, long: 0, answer: 0};
 
     let all_questions = fs::read_to_string(questions_file_path)?;
@@ -53,10 +53,10 @@ fn get_questions_counts(questions_file_path: &PathBuf) -> io::Result<QuestionsCo
     Ok(q_count)
 }
 
-pub fn get_question(questions_file_path: PathBuf) -> io::Result<Question> {
+pub fn get_question(questions_file_path: &Path) -> io::Result<Question> {
     // let small_questions: Vec<String> = get_question_type(questions_file_path.clone(), QuestionType::Short)?;
     // let long_questions: Vec<String>= get_question_type(questions_file_path, QuestionType::Long)?;
-    let q_counts = get_questions_counts(& questions_file_path)?;
+    let q_counts = get_questions_counts(& questions_file_path.to_path_buf())?;
 
     let mut rnd = rand::rng();
 

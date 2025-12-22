@@ -7,9 +7,9 @@ use std::fs;
 use std::fs::OpenOptions;
 
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::Path;
 
-fn exists_today_file(jl_files_path: PathBuf, today_file: String) -> io::Result<bool> {
+fn exists_today_file(jl_files_path: &Path, today_file: &String) -> io::Result<bool> {
     let today_file_path = jl_files_path.join(&today_file);
 
     if jl_files_path.is_dir() {
@@ -26,18 +26,16 @@ fn exists_today_file(jl_files_path: PathBuf, today_file: String) -> io::Result<b
 }
  
 fn main() -> io::Result<()> {
-    let mut jl_files_path = PathBuf::new();
-    jl_files_path.push("./.jl");
+    let jl_files_path = Path::new("./.jl");
 
     let today_file= chrono::offset::Local::now().format("%Y-%m-%d.txt").to_string();
     let today_file_path = jl_files_path.join(&today_file);
     let questions_file_path = jl_files_path.join("questions.txt");
 
-    if !exists_today_file(jl_files_path, today_file)? {
+    if !exists_today_file(jl_files_path, &today_file)? {
         fs::write(&today_file_path, "")?;
     }
-
-    let question_to_ask = file_parsing::get_question(questions_file_path)?;
+    let question_to_ask: Question = file_parsing::get_question(&questions_file_path)?;
 
     if question_to_ask == Question::default(){
         return Ok(());
