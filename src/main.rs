@@ -8,15 +8,31 @@ use std::path::PathBuf;
 
 use rand::Rng;
 
-// const SMALL_QUESTION_CHANCE: f64 = 0.5;
-// const BIG_QUESTION_CHANCE: f64 = 0.5;
-const SMALL_QUESTION_CHANCE: f64 = 0.2;
-const BIG_QUESTION_CHANCE: f64 = 0.1;
+const SMALL_QUESTION_CHANCE: f64 = 0.5;
+const BIG_QUESTION_CHANCE: f64 = 0.5;
+// const SMALL_QUESTION_CHANCE: f64 = 0.2;
+// const BIG_QUESTION_CHANCE: f64 = 0.1;
 
 const QUESTION_TYPE_TRAIL: &str = ": ";
 
+#[derive(PartialEq)]
+enum QuestionType {
+    Short,
+    Long,
+    Answer,
+    Empty
+}
+
+#[derive(Default)]
+struct QuestionsCount{
+    short: i64,
+    long: i64,
+    answer: i64,
+}
+
+#[derive(PartialEq, Default)]
 struct Question{
-    question: String
+    question: String,
 }
 
 impl From<String> for Question{
@@ -34,24 +50,29 @@ impl fmt::Display for Question{
 }
 
 trait Informative{
-    fn get_type(&self) -> String;
+    fn get_type(&self) -> QuestionType;
     fn get_text(&self) -> String;
 }
 
 impl Informative for Question{
-    fn get_type(&self) -> String {
+    fn get_type(&self) -> QuestionType {
         let question_type = self.question.get(..1).unwrap_or("");
         let follow_up_chars = self.question.get(1..3).unwrap_or("");
 
         if follow_up_chars != QUESTION_TYPE_TRAIL{
-            return "".to_string();
+            return QuestionType::Empty;
         }
 
-        question_type.to_string()
+        match question_type {
+            "l" => QuestionType::Long,
+            "s" => QuestionType::Short,
+            "a" => QuestionType::Answer,
+            _ => QuestionType::Empty
+        }
     }
 
     fn get_text(&self) -> String {
-        if self.get_type() == "".to_string() {
+        if self.get_type() == QuestionType::Empty {
             return "".to_string();
         }
 
@@ -76,54 +97,72 @@ fn exists_today_file(jl_files_path: PathBuf, today_file: String) -> io::Result<b
     }
     Ok(false)
 }
+ 
+// refactor to use an iterator that only reads until endl
+fn get_question_from_type(questions_file_path: &PathBuf, type_to_get: QuestionType, question_idx: i64) -> io::Result<Question> {
+    let all_questions = fs::read_to_string(questions_file_path)?;
+    let all_questions_it = all_questions.split("\n");
 
-// fn get_small_questions(questions_file_path: PathBuf) -> Vec<String> {
+    let mut q_idx = 0;
+    for question_str in all_questions_it {
+        let question: Question = question_str.to_string().into();
+        let question_type = question.get_type();
 
-// }
+        if type_to_get == question_type {
+            if q_idx == question_idx{
+                return Ok(question);
+            }
+            q_idx += 1;
+        }
+    }
 
-fn get_question(questions_file_path: PathBuf) -> io::Result<String> {
-    let mut small_questions: Vec<String>= Vec::new();
-    let mut long_questions: Vec<String>= Vec::new();
+    Ok(Question::default())
+}
+
+fn get_questions_counts(questions_file_path: &PathBuf) -> io::Result<QuestionsCount> {
+    let mut q_count: QuestionsCount = QuestionsCount{short:0, long: 0, answer: 0};
 
     let all_questions = fs::read_to_string(questions_file_path)?;
     let all_questions_it = all_questions.split("\n");
 
-    for question in all_questions_it {
-        // if question[:1]
-        // small_questions.append();
-        let question_type = question.get(..1).unwrap_or("");
-        let question_text = question.get(3..).unwrap_or("").to_string();
+    for question_str in all_questions_it {
+        let question: Question = question_str.to_string().into();
+        let question_type = question.get_type();
+
         match question_type{
-            "s" => small_questions.push(question_text),
-            "l" => long_questions.push(question_text),
-            _ => continue, 
+            QuestionType::Long => q_count.long += 1,
+            QuestionType::Short => q_count.short += 1,
+            QuestionType::Answer => q_count.answer += 1,
+            _ => continue,
         }
     }
+
+    Ok(q_count)
+}
+
+fn get_question(questions_file_path: PathBuf) -> io::Result<Question> {
+    // let small_questions: Vec<String> = get_question_type(questions_file_path.clone(), QuestionType::Short)?;
+    // let long_questions: Vec<String>= get_question_type(questions_file_path, QuestionType::Long)?;
+    let q_counts = get_questions_counts(& questions_file_path)?;
+
     let mut rnd = rand::rng();
 
     let question_length_sample: f64 = rnd.random();
-    let small_question_sample: usize = (rnd.random::<f64>() * (small_questions.len() as f64)) as usize;
-    let long_question_sample: usize = (rnd.random::<f64>() * (long_questions.len() as f64)) as usize;
+    let small_question_sample: i64 = (rnd.random::<f64>() * (q_counts.short as f64)) as i64;
+    let long_question_sample: i64 = (rnd.random::<f64>() * (q_counts.long as f64)) as i64;
 
     match question_length_sample{
         c if c < SMALL_QUESTION_CHANCE 
-            => return Ok(small_questions[small_question_sample].clone()),
+            => return get_question_from_type(&questions_file_path, QuestionType::Short, small_question_sample),
         c if c < (SMALL_QUESTION_CHANCE + BIG_QUESTION_CHANCE) 
-            => return Ok(long_questions[long_question_sample].clone()),
+            => return get_question_from_type(&questions_file_path, QuestionType::Long, long_question_sample),
         _ => (),
     }
 
-    Ok("".to_string())
+    Ok(Question::default())
 }
 
 fn main() -> io::Result<()> {
-    let question: Question = "m: hello".to_string().into();
-    let q_type = question.get_type();
-    let q_text = question.get_text();
-    println!("{}", q_type);
-    println!("{}", q_text);
-    
-    return Ok(());
     let mut jl_files_path = PathBuf::new();
     jl_files_path.push("./.jl");
 
@@ -137,10 +176,10 @@ fn main() -> io::Result<()> {
 
     let question_to_ask = get_question(questions_file_path)?;
 
-    if question_to_ask == ""{
+    if question_to_ask == Question::default(){
         return Ok(());
     }
-    println!("{}", question_to_ask);
+    println!("{}", question_to_ask.get_text());
 
     let mut answer = String::new();
     io::stdin().read_line(&mut answer).expect("Failed to read line");
@@ -150,7 +189,7 @@ fn main() -> io::Result<()> {
         .append(true)   
         .open(today_file_path)?;
 
-    file.write_all(question_to_ask.as_bytes())?;
+    file.write_all(question_to_ask.question.as_bytes())?;
     file.write_all(answer.as_bytes())?;
 
     Ok(())
