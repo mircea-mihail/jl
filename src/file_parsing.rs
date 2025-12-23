@@ -48,13 +48,7 @@ fn get_unasked_question_vector(questions_path: &Path, get_type: &QuestionType, a
     Ok(q_vec)
 }
 
-// fn get_question_from_vector(get_type: QuestionType, question_idx: i64) -> Question {
-// }
-
 pub fn get_question(questions_path: &Path, today_file_path: &Path) -> io::Result<Question> {
-    // let small_questions: Vec<String> = get_question_type(questions_path.clone(), QuestionType::Short)?;
-    // let long_questions: Vec<String>= get_question_type(questions_path, QuestionType::Long)?;
-
     let mut rnd = rand::rng();
 
     let question_length_sample: f64 = rnd.random();
