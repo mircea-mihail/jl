@@ -10,14 +10,8 @@ pub enum QuestionType {
     Empty
 }
 
-#[derive(Default)]
-pub struct QuestionsCount{
-    pub short: i64,
-    pub long: i64,
-    pub answer: i64,
-}
 
-#[derive(PartialEq, Default)]
+#[derive(PartialEq, Default, Clone)]
 pub struct Question{
     pub question: String,
 }

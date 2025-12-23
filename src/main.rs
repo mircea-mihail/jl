@@ -35,7 +35,7 @@ fn main() -> io::Result<()> {
     if !exists_today_file(jl_files_path, &today_file)? {
         fs::write(&today_file_path, "")?;
     }
-    let question_to_ask: Question = file_parsing::get_question(&questions_file_path)?;
+    let question_to_ask: Question = file_parsing::get_question(&questions_file_path, &today_file_path)?;
 
     if question_to_ask == Question::default(){
         return Ok(());
@@ -44,6 +44,7 @@ fn main() -> io::Result<()> {
 
     let mut answer = String::new();
     io::stdin().read_line(&mut answer).expect("Failed to read line");
+    answer = format!("a: {}", answer);
 
     let mut file = OpenOptions::new()
         .write(true)    
@@ -51,6 +52,7 @@ fn main() -> io::Result<()> {
         .open(today_file_path)?;
 
     file.write_all(question_to_ask.question.as_bytes())?;
+    file.write_all("\n".as_bytes())?;
     file.write_all(answer.as_bytes())?;
 
     Ok(())
