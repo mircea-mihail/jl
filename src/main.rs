@@ -1,5 +1,13 @@
+// features to add:
+// add flags
+// use flags to input things: 
+//      jl -d to add a description to your day
+//      jl -s to show today notes 
+//      jl -w to show week notes
+//      jl -m to show week notes
+
 mod question_structs;
-use question_structs::{Question, Informative};
+use question_structs::{Question, Informative, QuestionType};
 
 mod file_parsing;
 
@@ -8,6 +16,9 @@ use std::fs::OpenOptions;
 
 use std::io::{self, Write};
 use std::path::Path;
+
+use rustyline::error::ReadlineError;
+use rustyline::{DefaultEditor, Result, Config, EditMode};
 
 fn exists_today_file(jl_files_path: &Path, today_file: &String) -> io::Result<bool> {
     let today_file_path = jl_files_path.join(&today_file);
@@ -24,8 +35,8 @@ fn exists_today_file(jl_files_path: &Path, today_file: &String) -> io::Result<bo
     }
     Ok(false)
 }
- 
-fn main() -> io::Result<()> {
+
+fn main() -> Result<()> {
     let jl_files_path = Path::new("./.jl");
 
     let today_file= chrono::offset::Local::now().format("%Y-%m-%d.txt").to_string();
@@ -42,18 +53,46 @@ fn main() -> io::Result<()> {
     }
     println!("{}", question_to_ask.get_text());
 
-    let mut answer = String::new();
-    io::stdin().read_line(&mut answer).expect("Failed to read line");
-    answer = format!("a: {}", answer);
+    let config = Config::builder()
+        .edit_mode(EditMode::Vi) 
+        .build();
+    let mut rl = DefaultEditor::with_config(config)?;
 
     let mut file = OpenOptions::new()
         .write(true)    
         .append(true)   
         .open(today_file_path)?;
 
-    file.write_all(question_to_ask.question.as_bytes())?;
-    file.write_all("\n".as_bytes())?;
-    file.write_all(answer.as_bytes())?;
+    let mut wrote_quesiton = false;
+    loop {
+        let readline = rl.readline(">> ");
+        match readline {
+            Ok(line) => {
+                if ! wrote_quesiton {
+                    file.write_all(question_to_ask.question.as_bytes())?;
+                    file.write_all("\n".as_bytes())?;
+                    wrote_quesiton = true;
+                }
 
+                file.write_all("a: ".as_bytes())?;
+                file.write_all(line.as_bytes())?;
+                file.write_all("\n".as_bytes())?;
+
+                if question_to_ask.get_type() == QuestionType::Short {
+                    break
+                }
+            },
+            Err(ReadlineError::Interrupted) => {
+                break
+            },
+            Err(ReadlineError::Eof) => {
+                break
+            },
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break
+            }
+        }
+    }
     Ok(())
 }
