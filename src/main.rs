@@ -68,18 +68,23 @@ fn main() -> Result<()> {
         let readline = rl.readline(">> ");
         match readline {
             Ok(line) => {
-                if ! wrote_quesiton {
+                if line == "".to_string() {
+                    break
+                }
+
+                if !wrote_quesiton {
                     file.write_all(question_to_ask.question.as_bytes())?;
                     file.write_all("\n".as_bytes())?;
                     wrote_quesiton = true;
                 }
 
-                file.write_all("a: ".as_bytes())?;
-                file.write_all(line.as_bytes())?;
-                file.write_all("\n".as_bytes())?;
-
                 if question_to_ask.get_type() == QuestionType::Short {
                     break
+                }
+                else {
+                    file.write_all("a: ".as_bytes())?;
+                    file.write_all(line.as_bytes())?;
+                    file.write_all("\n".as_bytes())?;
                 }
             },
             Err(ReadlineError::Interrupted) => {
