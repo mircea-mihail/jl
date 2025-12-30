@@ -31,6 +31,7 @@ impl fmt::Display for Question{
 
 pub trait Informative{
     fn get_type(&self) -> QuestionType;
+    fn get_type_as_str(&self) -> &str; 
     fn get_text(&self) -> String;
 }
 
@@ -49,6 +50,17 @@ impl Informative for Question{
             "a" => QuestionType::Answer,
             _ => QuestionType::Empty
         }
+    }
+
+    fn get_type_as_str(&self) -> &str {
+        let question_type = self.question.get(..1).unwrap_or("");
+        let follow_up_chars = self.question.get(1..3).unwrap_or("");
+
+        if follow_up_chars != QUESTION_TYPE_TRAIL{
+            return "";
+        }
+
+        question_type
     }
 
     fn get_text(&self) -> String {

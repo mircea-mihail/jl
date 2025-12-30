@@ -1,8 +1,6 @@
 // features to add:
 // add flags
 // use flags to input things: 
-//      jl -d to add a description to your day
-//      jl -s to show today notes 
 //      jl -w to show week notes
 //      jl -m to show week notes
 
@@ -29,9 +27,15 @@ const QUESTION_FILE_NAME: &str = "questions.txt";
 
 #[derive(Parser)]
 struct Cli {
+    /// Talk about how your day was
     #[arg(short, long)]
     description: Option<String>,
 
+    /// Give a short update during the day
+    #[arg(short, long)]
+    update: Option<String>,
+
+    /// Rate your day out of 10 (can be any number)
     #[arg(short, long)]
     rating: Option<f64>,
 }
@@ -121,7 +125,10 @@ fn main() -> Result<()> {
                 }
 
                 if !wrote_quesiton {
-                    file.write_all(question_to_ask.question.as_bytes())?;
+                    file.write_all(question_to_ask.get_type_as_str().as_bytes())?;
+                    file.write_all(": ".as_bytes())?;
+                    file.write_all(chrono::offset::Local::now().format("%H:%M ").to_string().as_bytes())?;
+                    file.write_all(question_to_ask.get_text().as_bytes())?;
                     file.write_all("\n".as_bytes())?;
                     wrote_quesiton = true;
                 }
@@ -147,6 +154,5 @@ fn main() -> Result<()> {
             }
         }
     }
-    println!("end of file");
     Ok(())
 }
