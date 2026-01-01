@@ -1,8 +1,17 @@
 // features to add:
-// add flags
 // use flags to input things: 
 //      jl -w to show week notes
 //      jl -m to show week notes
+// fix standard: leave only l: text and add date (and potentially other info) before the stored question:
+    // example: (info point)
+    // i: 14:33, sunny, etc etc however many
+    // s: How many coffees?
+    // a: 2
+    // 
+    // i: 22:10, cloudy, etc etc
+    // l: Fav thing(s) of today?
+    // a: loved the new year's firework show
+    // a: also really enjoyed playing cards with friends
 
 mod question_structs;
 use question_structs::{Question, Informative, QuestionType};
