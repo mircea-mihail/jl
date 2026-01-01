@@ -28,15 +28,20 @@ const QUESTION_FILE_NAME: &str = "questions.txt";
 #[derive(Parser)]
 struct Cli {
     /// Talk about how your day was
-    #[arg(short, long)]
+    #[arg(
+        short,
+        long,
+        num_args = 0..=1,
+        default_missing_value = "No description provided"
+    )]
     description: Option<String>,
 
     /// Give a short update during the day
-    #[arg(short, long)]
+    #[arg(short, long, num_args = 0..=1)]
     update: Option<String>,
 
     /// Rate your day out of 10 (can be any number)
-    #[arg(short, long)]
+    #[arg(short, long, num_args = 0..=1)]
     rating: Option<f64>,
 }
 
@@ -63,40 +68,74 @@ fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<bool
     Ok(false)
 }
 
+fn write_question(mut file: &fs::File, question: &Question) -> io::Result<()>{
+    file.write_all(question.get_type_as_str().as_bytes())?;
+    file.write_all(": ".as_bytes())?;
+    file.write_all(chrono::offset::Local::now().format("%H:%M ").to_string().as_bytes())?;
+    file.write_all(question.get_text().as_bytes())?;
+    file.write_all("\n".as_bytes())?;
+
+    Ok(())
+}
+
+fn write_answer(mut file: &fs::File, answer: &String) -> io::Result<()> {
+    file.write_all("a: ".as_bytes())?;
+    file.write_all(answer.as_bytes())?;
+    file.write_all("\n".as_bytes())?;
+
+    Ok(())
+} 
+
 fn main() -> Result<()> {
-    let args = Cli::parse();
-
-    match args.description{
-        Some(a) => {
-            println!("description: {}", a);
-            return Ok(());
-        }
-        None => (),
-    }
-    match args.rating{
-        Some(a) => {
-            println!("rating: {}", a);
-            return Ok(());
-        }
-        None => (),
-    }
-
     let mut jl_dir_path = home::home_dir().expect("Could not find home directory");
     jl_dir_path.push(JL_DIR_NAME);
 
     let today_file= chrono::offset::Local::now().format("%Y-%m-%d.txt").to_string();
     let today_file_path = jl_dir_path.join(&today_file);
     let questions_file_path = jl_dir_path.join(QUESTION_FILE_NAME);
+
     if !questions_file_path.exists() {
         fs::write(&questions_file_path, "l: Long question\ns: Short question\n")
             .expect("Failed to create question file\n"); 
     }
-
     if !exists_today_file(&jl_dir_path, &today_file)? {
         fs::write(&today_file_path, "")?;
     }
 
-    let question_to_ask: Question = file_parsing::get_question(&questions_file_path, &today_file_path)?;
+    let file: fs::File = OpenOptions::new()
+        .write(true)    
+        .append(true)   
+        .open(&today_file_path)?;
+
+    let args = Cli::parse();
+    let mut question_to_ask: Question = Question::default();
+    let mut get_question = true;
+
+
+    match args.description{
+        Some(a) => {
+            question_to_ask = "l: Talk about how your day was".to_string().into();
+            get_question = false;
+
+            if a != "No description provided" {
+                write_question(&file, &question_to_ask)?;
+                write_answer(&file, &a)?;
+                return Ok(());
+            }
+        }
+        None => (),
+    }
+    match args.rating{
+        Some(a) => {
+            println!("rating: {}", a);
+            question_to_ask = "s: Rate your day out of ten".to_string().into();
+            get_question = false;
+        }
+        None => (),
+    }
+    if get_question {
+        question_to_ask = file_parsing::get_question(&questions_file_path, &today_file_path)?;
+    }
 
     if question_to_ask == Question::default(){
         return Ok(());
@@ -109,11 +148,6 @@ fn main() -> Result<()> {
         .build();
     let mut rl = DefaultEditor::with_config(config)?;
 
-    let mut file = OpenOptions::new()
-        .write(true)    
-        .append(true)   
-        .open(&today_file_path)?;
-
     let mut wrote_quesiton = false;
 
     loop {
@@ -123,24 +157,16 @@ fn main() -> Result<()> {
                 if line == "".to_string() {
                     break
                 }
-
                 if !wrote_quesiton {
-                    file.write_all(question_to_ask.get_type_as_str().as_bytes())?;
-                    file.write_all(": ".as_bytes())?;
-                    file.write_all(chrono::offset::Local::now().format("%H:%M ").to_string().as_bytes())?;
-                    file.write_all(question_to_ask.get_text().as_bytes())?;
-                    file.write_all("\n".as_bytes())?;
+                    write_question(&file, &question_to_ask)?;
                     wrote_quesiton = true;
                 }
-
                 if question_to_ask.get_type() == QuestionType::Short {
                     break
                 }
                 else {
-                    file.write_all("a: ".as_bytes())?;
-                    file.write_all(line.as_bytes())?;
-                    file.write_all("\n".as_bytes())?;
-                }
+                    write_answer(&file, &line)?;
+               }
             },
             Err(ReadlineError::Interrupted) => {
                 break
