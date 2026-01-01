@@ -4,12 +4,13 @@ use std::path::Path;
 use std::fs;
 use std::io;
 
+use crate::question_structs::Generic;
 use crate::question_structs::{Question, QuestionType, Informative};
 
 const SHORT_QUESTION_CHANCE: f64 = 0.5;
 const LONG_QUESTION_CHANCE: f64 = 0.5;
-// const SMALL_QUESTION_CHANCE: f64 = 0.2;
-// const BIG_QUESTION_CHANCE: f64 = 0.1;
+// const SHORT_QUESTION_CHANCE: f64 = 0.0;
+// const LONG_QUESTION_CHANCE: f64 = 1.0;
 
 fn get_question_vector(questions_path: &Path, get_type: &QuestionType) -> io::Result<Vec<Question>>{
     let all_questions = fs::read_to_string(questions_path)?;
@@ -18,7 +19,9 @@ fn get_question_vector(questions_path: &Path, get_type: &QuestionType) -> io::Re
     let mut q_vec:Vec<Question>= Vec::new();
 
     for question_str in all_questions_it {
-        let question: Question = question_str.to_string().into();
+        let dated_question: Question = question_str.to_string().into();
+        let question = dated_question.clone_without_date();
+        println!("undated question: {}", question);
         let question_type = question.get_type();
 
         if get_type == &question_type {
@@ -63,7 +66,7 @@ pub fn get_question(questions_path: &Path, today_file_path: &Path) -> io::Result
 
     let asked_questions = get_question_vector(&today_file_path, &question_type)?;
     let unasked_questions = get_unasked_question_vector(questions_path, &question_type, asked_questions)?;
-    
+
     if unasked_questions.is_empty() {
         return Ok(Question::default());
     }

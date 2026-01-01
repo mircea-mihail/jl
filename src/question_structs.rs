@@ -35,6 +35,23 @@ pub trait Informative{
     fn get_text(&self) -> String;
 }
 
+pub trait Generic{
+    fn clone_without_date(&self) -> Question;
+}
+
+impl Generic for Question {
+    fn clone_without_date(&self) -> Question {
+        if self.get_type() == QuestionType::Answer {
+            return self.clone();
+        }
+
+        let first_half: String = self.question.get(..2).unwrap_or("").to_string();
+        let second_half = self.question.get(8..).unwrap_or("");
+
+        (first_half + second_half).into()
+    }
+}
+
 impl Informative for Question{
     fn get_type(&self) -> QuestionType {
         let question_type = self.question.get(..1).unwrap_or("");
