@@ -10,7 +10,7 @@ pub enum QuestionType {
     Empty
 }
 
-#[derive(PartialEq, Default, Clone)]
+#[derive(PartialEq, Default, Clone, Debug)]
 pub struct Question{
     pub question: String,
 }

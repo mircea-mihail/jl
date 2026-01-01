@@ -86,6 +86,76 @@ fn write_answer(mut file: &fs::File, answer: &String) -> io::Result<()> {
     Ok(())
 } 
 
+fn run_input_loop(question: Question, file: &fs::File) -> Result<()> {
+    println!("{}", question.get_text());
+
+    let config = Config::builder()
+        .edit_mode(EditMode::Vi) 
+        .build();
+    let mut rl = DefaultEditor::with_config(config)?;
+
+    let mut wrote_quesiton = false;
+
+    loop {
+        let readline = rl.readline(">> ");
+        match readline {
+            Ok(line) => {
+                if line == "".to_string() {
+                    break
+                }
+                if !wrote_quesiton {
+                    write_question(&file, &question)?;
+                    wrote_quesiton = true;
+                }
+
+                write_answer(&file, &line)?;
+
+                if question.get_type() == QuestionType::Short {
+                    break
+                }
+            },
+            Err(ReadlineError::Interrupted) => {
+                break
+            },
+            Err(ReadlineError::Eof) => {
+                break
+            },
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn get_answer_from_args(question: &mut Question, file: &fs::File) -> io::Result<bool> {
+    let args = Cli::parse();
+
+    match args.description{
+        Some(a) => {
+            *question = "l: Talk about how your day was".to_string().into();
+
+            if a != "No description provided" {
+                write_question(&file, &question)?;
+                write_answer(&file, &a)?;
+                return Ok(true);
+            }
+        }
+        None => (),
+    }
+    match args.rating{
+        Some(a) => {
+            println!("rating: {}", a);
+            *question = "s: Rate your day out of ten".to_string().into();
+        }
+        None => (),
+    }
+
+    Ok(false)
+}
+
 fn main() -> Result<()> {
     let mut jl_dir_path = home::home_dir().expect("Could not find home directory");
     jl_dir_path.push(JL_DIR_NAME);
@@ -107,78 +177,21 @@ fn main() -> Result<()> {
         .append(true)   
         .open(&today_file_path)?;
 
-    let args = Cli::parse();
     let mut question_to_ask: Question = Question::default();
-    let mut get_question = true;
 
-
-    match args.description{
-        Some(a) => {
-            question_to_ask = "l: Talk about how your day was".to_string().into();
-            get_question = false;
-
-            if a != "No description provided" {
-                write_question(&file, &question_to_ask)?;
-                write_answer(&file, &a)?;
-                return Ok(());
-            }
-        }
-        None => (),
+    if get_answer_from_args(&mut question_to_ask, &file)? {
+        return Ok(());
     }
-    match args.rating{
-        Some(a) => {
-            println!("rating: {}", a);
-            question_to_ask = "s: Rate your day out of ten".to_string().into();
-            get_question = false;
-        }
-        None => (),
-    }
-    if get_question {
+
+    if question_to_ask == Question::default() {
         question_to_ask = file_parsing::get_question(&questions_file_path, &today_file_path)?;
     }
 
-    if question_to_ask == Question::default(){
+    if question_to_ask == Question::default() {
         return Ok(());
     }
-    // refactor, put into function
-    println!("{}", question_to_ask.get_text());
 
-    let config = Config::builder()
-        .edit_mode(EditMode::Vi) 
-        .build();
-    let mut rl = DefaultEditor::with_config(config)?;
+    run_input_loop(question_to_ask, &file)?;
 
-    let mut wrote_quesiton = false;
-
-    loop {
-        let readline = rl.readline(">> ");
-        match readline {
-            Ok(line) => {
-                if line == "".to_string() {
-                    break
-                }
-                if !wrote_quesiton {
-                    write_question(&file, &question_to_ask)?;
-                    wrote_quesiton = true;
-                }
-                if question_to_ask.get_type() == QuestionType::Short {
-                    break
-                }
-                else {
-                    write_answer(&file, &line)?;
-               }
-            },
-            Err(ReadlineError::Interrupted) => {
-                break
-            },
-            Err(ReadlineError::Eof) => {
-                break
-            },
-            Err(err) => {
-                println!("Error: {:?}", err);
-                break
-            }
-        }
-    }
     Ok(())
 }
