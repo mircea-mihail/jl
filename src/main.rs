@@ -1,17 +1,9 @@
 // features to add:
 // use flags to input things: 
 //      jl -w to show week notes
-//      jl -m to show week notes
-// fix standard: leave only l: text and add date (and potentially other info) before the stored question:
-    // example: (info point)
-    // i: 14:33, sunny, etc etc however many
-    // s: How many coffees?
-    // a: 2
-    // 
-    // i: 22:10, cloudy, etc etc
-    // l: Fav thing(s) of today?
-    // a: loved the new year's firework show
-    // a: also really enjoyed playing cards with friends
+//      jl -m to show months notes
+//      think about how to show a table for short questions for the week 
+//      and maybe something interactive with browsing longer notes?
 
 mod question_structs;
 use question_structs::{Question, Informative, QuestionType};
@@ -78,9 +70,12 @@ fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<bool
 }
 
 fn write_question(mut file: &fs::File, question: &Question) -> io::Result<()>{
+    // write info point about the question
+    file.write_all(chrono::offset::Local::now().format("i: %H:%M\n").to_string().as_bytes())?;
+
+    // write the actual question
     file.write_all(question.get_type_as_str().as_bytes())?;
     file.write_all(": ".as_bytes())?;
-    file.write_all(chrono::offset::Local::now().format("%H:%M ").to_string().as_bytes())?;
     file.write_all(question.get_text().as_bytes())?;
     file.write_all("\n".as_bytes())?;
 
@@ -173,18 +168,25 @@ fn main() -> Result<()> {
     let today_file_path = jl_dir_path.join(&today_file);
     let questions_file_path = jl_dir_path.join(QUESTION_FILE_NAME);
 
+    let mut write_question_gap = true;
+
     if !questions_file_path.exists() {
         fs::write(&questions_file_path, "l: Long question\ns: Short question\n")
             .expect("Failed to create question file\n"); 
     }
     if !exists_today_file(&jl_dir_path, &today_file)? {
         fs::write(&today_file_path, "")?;
+        write_question_gap = false;
     }
 
-    let file: fs::File = OpenOptions::new()
+    let mut file: fs::File = OpenOptions::new()
         .write(true)    
         .append(true)   
         .open(&today_file_path)?;
+
+    if write_question_gap {
+        file.write_all("\n".as_bytes())?;
+    }
 
     let mut question_to_ask: Question = Question::default();
 

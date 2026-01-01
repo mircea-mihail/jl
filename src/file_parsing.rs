@@ -4,7 +4,6 @@ use std::path::Path;
 use std::fs;
 use std::io;
 
-use crate::question_structs::Generic;
 use crate::question_structs::{Question, QuestionType, Informative};
 
 const SHORT_QUESTION_CHANCE: f64 = 0.5;
@@ -19,9 +18,7 @@ fn get_question_vector(questions_path: &Path, get_type: &QuestionType) -> io::Re
     let mut q_vec:Vec<Question>= Vec::new();
 
     for question_str in all_questions_it {
-        let dated_question: Question = question_str.to_string().into();
-        let question = dated_question.clone_without_date();
-        println!("undated question: {}", question);
+        let question: Question = question_str.to_string().into();
         let question_type = question.get_type();
 
         if get_type == &question_type {
