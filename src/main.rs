@@ -1,4 +1,7 @@
 // features to add:
+// cool infopoint data: hour: minute, country, weather, degrees C
+// when displaying summaries, only show the final rating given (and maybe use the other ones to show how the day evolved)
+//      if someone has a rating of 5 in the morning but a 8 in the afternoon maybe show how the day improved and print the updates (if available)
 // use flags to input things: 
 //      jl -w to show week notes
 //      jl -m to show months notes
@@ -26,6 +29,10 @@ use home;
 const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
 
+const DEFAULT_DESCRIPTION: &str = "No description provided";
+// const DEFAULT_UPDATE: &str = "No update provided";
+const DEFAULT_RATING: &str = "1212.1212";
+
 #[derive(Parser)]
 struct Cli {
     /// Talk about how your day was
@@ -33,7 +40,7 @@ struct Cli {
         short,
         long,
         num_args = 0..=1,
-        default_missing_value = "No description provided"
+        default_missing_value = DEFAULT_DESCRIPTION
     )]
     description: Option<String>,
 
@@ -42,8 +49,44 @@ struct Cli {
     update: Option<String>,
 
     /// Rate your day out of 10 (can be any number)
-    #[arg(short, long, num_args = 0..=1)]
+    #[arg(
+        short,
+        long,
+        num_args = 0..=1,
+        default_missing_value = DEFAULT_RATING
+    )]
     rating: Option<f64>,
+}
+
+fn get_answer_from_args(question: &mut Question, file: &fs::File) -> io::Result<bool> {
+    let args = Cli::parse();
+
+    match args.description{
+        Some(a) => {
+            *question = "l: Talk about how your day was".to_string().into();
+
+            if a != DEFAULT_DESCRIPTION {
+                write_question(&file, &question)?;
+                write_answer(&file, &a)?;
+                return Ok(true);
+            }
+        }
+        None => (),
+    }
+    match args.rating{
+        Some(a) => {
+            *question = "s: Rate your day out of ten".to_string().into();
+
+            if a != DEFAULT_RATING.parse::<f64>().unwrap() {
+                write_question(&file, &question)?;
+                write_answer(&file, &a.to_string())?;
+                return Ok(true);
+            }
+        }
+        None => (),
+    }
+
+    Ok(false)
 }
 
 fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<bool> {
@@ -61,7 +104,7 @@ fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<bool
             let entry = entry?;
             let path = entry.path();
 
-            if path.extension().and_then(|ext| ext.to_str()) == Some("txt") && path == today_file_path{
+            if path.extension().and_then(|ext| ext.to_str()) == Some("txt") && path == today_file_path {
                 return Ok(true);
             }
         }
@@ -132,32 +175,6 @@ fn run_input_loop(question: Question, file: &fs::File) -> Result<()> {
     }
 
     Ok(())
-}
-
-fn get_answer_from_args(question: &mut Question, file: &fs::File) -> io::Result<bool> {
-    let args = Cli::parse();
-
-    match args.description{
-        Some(a) => {
-            *question = "l: Talk about how your day was".to_string().into();
-
-            if a != "No description provided" {
-                write_question(&file, &question)?;
-                write_answer(&file, &a)?;
-                return Ok(true);
-            }
-        }
-        None => (),
-    }
-    match args.rating{
-        Some(a) => {
-            println!("rating: {}", a);
-            *question = "s: Rate your day out of ten".to_string().into();
-        }
-        None => (),
-    }
-
-    Ok(false)
 }
 
 fn main() -> Result<()> {
