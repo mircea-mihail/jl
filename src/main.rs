@@ -1,4 +1,4 @@
-// features to add:
+// todo and features to add:
 // cool infopoint data: hour: minute, country, weather, degrees C
 // when displaying summaries, only show the final rating given (and maybe use the other ones to show how the day evolved)
 //      if someone has a rating of 5 in the morning but a 8 in the afternoon maybe show how the day improved and print the updates (if available)
@@ -10,21 +10,16 @@
 
 mod question_structs;
 use question_structs::{Question, Informative, QuestionType};
-
 mod file_parsing;
 
 use std::fs;
 use std::fs::OpenOptions;
-
+use home;
 use std::io::{self, Write};
-use std::path::Path;
 
 use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Result, Config, EditMode};
-
 use clap::Parser;
-
-use home;
 
 const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
@@ -66,8 +61,8 @@ fn get_answer_from_args(question: &mut Question, file: &fs::File) -> io::Result<
             *question = "l: Talk about how your day was".to_string().into();
 
             if a != DEFAULT_DESCRIPTION {
-                write_question(&file, &question)?;
-                write_answer(&file, &a)?;
+                file_parsing::write_question(&file, &question)?;
+                file_parsing::write_answer(&file, &a)?;
                 return Ok(true);
             }
         }
@@ -78,8 +73,8 @@ fn get_answer_from_args(question: &mut Question, file: &fs::File) -> io::Result<
             *question = "s: Rate your day out of ten".to_string().into();
 
             if a != DEFAULT_RATING.parse::<f64>().unwrap() {
-                write_question(&file, &question)?;
-                write_answer(&file, &a.to_string())?;
+                file_parsing::write_question(&file, &question)?;
+                file_parsing::write_answer(&file, &a.to_string())?;
                 return Ok(true);
             }
         }
@@ -88,50 +83,6 @@ fn get_answer_from_args(question: &mut Question, file: &fs::File) -> io::Result<
 
     Ok(false)
 }
-
-fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<bool> {
-    let today_file_path = jl_dir_path.join(&today_file);
-
-    if !jl_dir_path.is_dir() {
-        match fs::create_dir(jl_dir_path){
-            Ok(()) => (),
-            Err(e) => println!("error: {}", e),
-        }
-    }
-
-    if jl_dir_path.is_dir() {
-        for entry in fs::read_dir(jl_dir_path)? {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.extension().and_then(|ext| ext.to_str()) == Some("txt") && path == today_file_path {
-                return Ok(true);
-            }
-        }
-    }
-    Ok(false)
-}
-
-fn write_question(mut file: &fs::File, question: &Question) -> io::Result<()>{
-    // write info point about the question
-    file.write_all(chrono::offset::Local::now().format("i: %H:%M\n").to_string().as_bytes())?;
-
-    // write the actual question
-    file.write_all(question.get_type_as_str().as_bytes())?;
-    file.write_all(": ".as_bytes())?;
-    file.write_all(question.get_text().as_bytes())?;
-    file.write_all("\n".as_bytes())?;
-
-    Ok(())
-}
-
-fn write_answer(mut file: &fs::File, answer: &String) -> io::Result<()> {
-    file.write_all("a: ".as_bytes())?;
-    file.write_all(answer.as_bytes())?;
-    file.write_all("\n".as_bytes())?;
-
-    Ok(())
-} 
 
 fn run_input_loop(question: Question, file: &fs::File) -> Result<()> {
     println!("{}", question.get_text());
@@ -151,11 +102,11 @@ fn run_input_loop(question: Question, file: &fs::File) -> Result<()> {
                     break
                 }
                 if !wrote_quesiton {
-                    write_question(&file, &question)?;
+                    file_parsing::write_question(&file, &question)?;
                     wrote_quesiton = true;
                 }
 
-                write_answer(&file, &line)?;
+                file_parsing::write_answer(&file, &line)?;
 
                 if question.get_type() == QuestionType::Short {
                     break
@@ -191,7 +142,7 @@ fn main() -> Result<()> {
         fs::write(&questions_file_path, "l: Long question\ns: Short question\n")
             .expect("Failed to create question file\n"); 
     }
-    if !exists_today_file(&jl_dir_path, &today_file)? {
+    if !file_parsing::exists_today_file(&jl_dir_path, &today_file)? {
         fs::write(&today_file_path, "")?;
         write_question_gap = false;
     }

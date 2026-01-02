@@ -1,8 +1,8 @@
 use rand::Rng;
 use std::path::Path;
 
+use std::io::{self, Write};
 use std::fs;
-use std::io;
 
 use crate::question_structs::{Question, QuestionType, Informative};
 
@@ -72,3 +72,46 @@ pub fn get_question(questions_path: &Path, today_file_path: &Path) -> io::Result
     return Ok(unasked_questions[small_question_sample].clone());
 }
 
+pub fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<bool> {
+    let today_file_path = jl_dir_path.join(&today_file);
+
+    if !jl_dir_path.is_dir() {
+        match fs::create_dir(jl_dir_path){
+            Ok(()) => (),
+            Err(e) => println!("error: {}", e),
+        }
+    }
+
+    if jl_dir_path.is_dir() {
+        for entry in fs::read_dir(jl_dir_path)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.extension().and_then(|ext| ext.to_str()) == Some("txt") && path == today_file_path {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+pub fn write_question(mut file: &fs::File, question: &Question) -> io::Result<()>{
+    // write info point about the question
+    file.write_all(chrono::offset::Local::now().format("i: %H:%M\n").to_string().as_bytes())?;
+
+    // write the actual question
+    file.write_all(question.get_type_as_str().as_bytes())?;
+    file.write_all(": ".as_bytes())?;
+    file.write_all(question.get_text().as_bytes())?;
+    file.write_all("\n".as_bytes())?;
+
+    Ok(())
+}
+
+pub fn write_answer(mut file: &fs::File, answer: &String) -> io::Result<()> {
+    file.write_all("a: ".as_bytes())?;
+    file.write_all(answer.as_bytes())?;
+    file.write_all("\n".as_bytes())?;
+
+    Ok(())
+}
