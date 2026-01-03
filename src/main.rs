@@ -1,4 +1,7 @@
 // todo and features to add:
+// fix endline bug (jl -u or jl -d when empty prints endlines)
+// make the vim extension go to normal mode when pressing kj
+// make cursor different in insert and normal mode (| for insert, box for insert)
 // cool infopoint data: hour: minute, country, weather, degrees C
 // when displaying summaries, only show the final rating given (and maybe use the other ones to show how the day evolved)
 //      if someone has a rating of 5 in the morning but a 8 in the afternoon maybe show how the day improved and print the updates (if available)
@@ -25,7 +28,7 @@ const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
 
 const DEFAULT_DESCRIPTION: &str = "No description provided";
-// const DEFAULT_UPDATE: &str = "No update provided";
+const DEFAULT_UPDATE: &str = "No update provided";
 const DEFAULT_RATING: &str = "1212.1212";
 
 #[derive(Parser)]
@@ -40,7 +43,12 @@ struct Cli {
     description: Option<String>,
 
     /// Give a short update during the day
-    #[arg(short, long, num_args = 0..=1)]
+    #[arg(
+        short,
+        long,
+        num_args = 0..=1,
+        default_missing_value = DEFAULT_UPDATE
+    )]
     update: Option<String>,
 
     /// Rate your day out of 10 (can be any number)
@@ -61,6 +69,18 @@ fn get_answer_from_args(question: &mut Question, file: &fs::File) -> io::Result<
             *question = "l: Talk about how your day was".to_string().into();
 
             if a != DEFAULT_DESCRIPTION {
+                file_parsing::write_question(&file, &question)?;
+                file_parsing::write_answer(&file, &a)?;
+                return Ok(true);
+            }
+        }
+        None => (),
+    }
+    match args.update{
+        Some(a) => {
+            *question = "l: Give an update about your day".to_string().into();
+
+            if a != DEFAULT_UPDATE {
                 file_parsing::write_question(&file, &question)?;
                 file_parsing::write_answer(&file, &a)?;
                 return Ok(true);
