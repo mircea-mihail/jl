@@ -4,12 +4,7 @@ use std::path::Path;
 use std::io::{self, Write};
 use std::fs;
 
-use crate::question_structs::{Question, QuestionType, Informative};
-
-const SHORT_QUESTION_CHANCE: f64 = 0.5;
-const LONG_QUESTION_CHANCE: f64 = 0.5;
-// const SHORT_QUESTION_CHANCE: f64 = 0.0;
-// const LONG_QUESTION_CHANCE: f64 = 1.0;
+use crate::question_structs::{Informative, Question, QuestionChances, QuestionType};
 
 fn get_question_vector(questions_path: &Path, get_type: &QuestionType) -> io::Result<Vec<Question>>{
     let all_questions = fs::read_to_string(questions_path)?;
@@ -48,15 +43,15 @@ fn get_unasked_question_vector(questions_path: &Path, get_type: &QuestionType, a
     Ok(q_vec)
 }
 
-pub fn get_question(questions_path: &Path, today_file_path: &Path) -> io::Result<Question> {
+pub fn get_question(questions_path: &Path, today_file_path: &Path, question_chances: QuestionChances) -> io::Result<Question> {
     let mut rnd = rand::rng();
 
-    let question_length_sample: f64 = rnd.random();
+    let question_length_sample: f32 = rnd.random();
 
     let question_type: QuestionType = match question_length_sample{
-        c if c < SHORT_QUESTION_CHANCE 
+        c if c < question_chances.short
             => QuestionType::Short,
-        c if c < (SHORT_QUESTION_CHANCE + LONG_QUESTION_CHANCE) 
+        c if c < (question_chances.short + question_chances.long) 
             => QuestionType::Long,
         _ => return Ok(Question::default()),
     };

@@ -10,20 +10,26 @@ pub enum QuestionType {
     Empty
 }
 
+#[derive(Default, Debug)]
+pub struct QuestionChances {
+    pub short: f32,
+    pub long: f32,
+}
+
 #[derive(PartialEq, Default, Clone, Debug)]
-pub struct Question{
+pub struct Question {
     pub question: String,
 }
 
-impl From<String> for Question{
-    fn from(s: String) -> Self{
+impl From<String> for Question {
+    fn from(s: String) -> Self {
         Question {
             question: s
         }
     }
 }
 
-impl fmt::Display for Question{
+impl fmt::Display for Question {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.question)
     }

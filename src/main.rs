@@ -24,12 +24,21 @@ use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Result, Config, EditMode};
 use clap::Parser;
 
+use crate::question_structs::QuestionChances;
+
 const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
 
 const DEFAULT_DESCRIPTION: &str = "No description provided";
 const DEFAULT_UPDATE: &str = "No update provided";
 const DEFAULT_RATING: &str = "1212.1212";
+const DEFAULT_SOMETIMES: &str = "true";
+
+const DEFAULT_SHORT_CHANCE: f32 = 0.4;
+const DEFAULT_LONG_CHANCE: f32 = 0.6;
+
+const RARE_SHORT_CHANCE: f32 = 0.1;
+const RARE_LONG_CHANCE: f32 = 0.1;
 
 #[derive(Parser)]
 struct Cli {
@@ -59,9 +68,18 @@ struct Cli {
         default_missing_value = DEFAULT_RATING
     )]
     rating: Option<f64>,
+
+    /// Use this flag in order to lower chances of a question being asked
+    #[arg (
+        short,
+        long,
+        num_args = 0..=1,
+        default_missing_value = DEFAULT_SOMETIMES
+    )]
+    sometimes: Option<bool>,
 }
 
-fn get_answer_from_args(question: &mut Question, file: &fs::File) -> io::Result<bool> {
+fn get_answer_from_args(question: &mut Question, file: &fs::File, question_chances: &mut QuestionChances) -> io::Result<bool> {
     let args = Cli::parse();
 
     match args.description{
@@ -98,6 +116,19 @@ fn get_answer_from_args(question: &mut Question, file: &fs::File) -> io::Result<
                 return Ok(true);
             }
         }
+        None => (),
+    }
+    match args.sometimes {
+        Some(s) => {
+            if s != DEFAULT_SOMETIMES.parse::<bool>().unwrap() {
+                question_chances.short = DEFAULT_SHORT_CHANCE;
+                question_chances.long = DEFAULT_LONG_CHANCE;
+            }
+            else {
+                question_chances.short = RARE_SHORT_CHANCE;
+                question_chances.long = RARE_LONG_CHANCE;
+            }
+       }
         None => (),
     }
 
@@ -177,13 +208,16 @@ fn main() -> Result<()> {
     }
 
     let mut question_to_ask: Question = Question::default();
+    let mut question_chances: QuestionChances = QuestionChances {
+        short: (DEFAULT_SHORT_CHANCE), long: (DEFAULT_LONG_CHANCE) 
+    };
 
-    if get_answer_from_args(&mut question_to_ask, &file)? {
+    if get_answer_from_args(&mut question_to_ask, &file, &mut question_chances)? {
         return Ok(());
     }
 
     if question_to_ask == Question::default() {
-        question_to_ask = file_parsing::get_question(&questions_file_path, &today_file_path)?;
+        question_to_ask = file_parsing::get_question(&questions_file_path, &today_file_path, question_chances)?;
     }
 
     if question_to_ask == Question::default() {
