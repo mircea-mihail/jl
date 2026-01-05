@@ -2,7 +2,7 @@
 // fix endline bug (jl -u or jl -d when empty prints endlines)
 // make the vim extension go to normal mode when pressing kj
 // make cursor different in insert and normal mode (| for insert, box for insert)
-// cool infopoint data: hour: minute, country, weather, degrees C
+// cool infopoint data: hour:minute, country, weather, degrees C
 // when displaying summaries, only show the final rating given (and maybe use the other ones to show how the day evolved)
 //      if someone has a rating of 5 in the morning but a 8 in the afternoon maybe show how the day improved and print the updates (if available)
 // use flags to input things: 
@@ -135,7 +135,7 @@ fn get_answer_from_args(question: &mut Question, file: &fs::File, question_chanc
     Ok(false)
 }
 
-fn run_input_loop(question: Question, file: &fs::File) -> Result<()> {
+fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap   : bool) -> Result<()> {
     println!("{}", question.get_text());
 
     let config = Config::builder()
@@ -153,6 +153,10 @@ fn run_input_loop(question: Question, file: &fs::File) -> Result<()> {
                     break
                 }
                 if !wrote_quesiton {
+                    if write_question_gap {
+                        file.write_all("\n".as_bytes())?;
+                    }
+
                     file_parsing::write_question(&file, &question)?;
                     wrote_quesiton = true;
                 }
@@ -203,10 +207,6 @@ fn main() -> Result<()> {
         .append(true)   
         .open(&today_file_path)?;
 
-    if write_question_gap {
-        file.write_all("\n".as_bytes())?;
-    }
-
     let mut question_to_ask: Question = Question::default();
     let mut question_chances: QuestionChances = QuestionChances {
         short: (DEFAULT_SHORT_CHANCE), long: (DEFAULT_LONG_CHANCE) 
@@ -224,7 +224,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    run_input_loop(question_to_ask, &file)?;
+    run_input_loop(question_to_ask, &mut file, write_question_gap)?;
 
     Ok(())
 }
