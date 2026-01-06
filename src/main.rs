@@ -6,7 +6,7 @@
 // when displaying summaries, only show the final rating given (and maybe use the other ones to show how the day evolved)
 //      if someone has a rating of 5 in the morning but a 8 in the afternoon maybe show how the day improved and print the updates (if available)
 // use flags to input things: 
-//      jl -a add note to x days before 
+//      jl -u to update x days before
 //      jl -w to show week notes
 //      jl -m to show months notes highlights
 //      think about how to show a table for short questions for the week 
@@ -31,7 +31,7 @@ const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
 
 const DEFAULT_DESCRIPTION: &str = "No description provided";
-const DEFAULT_UPDATE: &str = "No update provided";
+const DEFAULT_NOTE: &str = "No note provided";
 const DEFAULT_RATING: &str = "1212.1212";
 const DEFAULT_SOMETIMES: &str = "true";
 
@@ -52,15 +52,14 @@ struct Cli {
     )]
     description: Option<String>,
 
-    // change from update to note (add a short note)
-    /// Give a short update during the day
+    /// Add a short note during the day
     #[arg(
         short,
         long,
         num_args = 0..=1,
-        default_missing_value = DEFAULT_UPDATE
+        default_missing_value = DEFAULT_NOTE
     )]
-    update: Option<String>,
+    note: Option<String>,
 
     /// Rate your day out of 10 (can be any number)
     #[arg(
@@ -86,7 +85,7 @@ struct Cli {
         long,
         num_args = 0..=1,
     )]
-    add: Option<i32>,
+    update: Option<i32>,
 }
 
 fn parse_args(question: &mut Question, file: &mut fs::File, question_chances: &mut QuestionChances) -> io::Result<bool> {
@@ -105,11 +104,11 @@ fn parse_args(question: &mut Question, file: &mut fs::File, question_chances: &m
         }
         None => (),
     }
-    match args.update{
+    match args.note{
         Some(a) => {
-            *question = "l: Give an update about your day".to_string().into();
+            *question = "s: Write a short note during the day".to_string().into();
 
-            if a != DEFAULT_UPDATE {
+            if a != DEFAULT_NOTE {
                 file.write_all("\n".as_bytes())?;
                 file_parsing::write_question(&file, &question)?;
                 file_parsing::write_answer(&file, &a)?;
