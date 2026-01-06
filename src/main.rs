@@ -6,8 +6,9 @@
 // when displaying summaries, only show the final rating given (and maybe use the other ones to show how the day evolved)
 //      if someone has a rating of 5 in the morning but a 8 in the afternoon maybe show how the day improved and print the updates (if available)
 // use flags to input things: 
+//      jl -a add note to x days before 
 //      jl -w to show week notes
-//      jl -m to show months notes
+//      jl -m to show months notes highlights
 //      think about how to show a table for short questions for the week 
 //      and maybe something interactive with browsing longer notes?
 
@@ -51,6 +52,7 @@ struct Cli {
     )]
     description: Option<String>,
 
+    // change from update to note (add a short note)
     /// Give a short update during the day
     #[arg(
         short,
@@ -69,7 +71,7 @@ struct Cli {
     )]
     rating: Option<f64>,
 
-    /// Use this flag in order to lower chances of a question being asked
+    /// Lower chances of a question being asked
     #[arg (
         short,
         long,
@@ -77,9 +79,17 @@ struct Cli {
         default_missing_value = DEFAULT_SOMETIMES
     )]
     sometimes: Option<bool>,
+
+    /// Update journal from x days ago
+    #[arg (
+        short,
+        long,
+        num_args = 0..=1,
+    )]
+    add: Option<i32>,
 }
 
-fn get_answer_from_args(question: &mut Question, file: &fs::File, question_chances: &mut QuestionChances) -> io::Result<bool> {
+fn parse_args(question: &mut Question, file: &mut fs::File, question_chances: &mut QuestionChances) -> io::Result<bool> {
     let args = Cli::parse();
 
     match args.description{
@@ -87,6 +97,7 @@ fn get_answer_from_args(question: &mut Question, file: &fs::File, question_chanc
             *question = "l: Talk about how your day was".to_string().into();
 
             if a != DEFAULT_DESCRIPTION {
+                file.write_all("\n".as_bytes())?;
                 file_parsing::write_question(&file, &question)?;
                 file_parsing::write_answer(&file, &a)?;
                 return Ok(true);
@@ -99,6 +110,7 @@ fn get_answer_from_args(question: &mut Question, file: &fs::File, question_chanc
             *question = "l: Give an update about your day".to_string().into();
 
             if a != DEFAULT_UPDATE {
+                file.write_all("\n".as_bytes())?;
                 file_parsing::write_question(&file, &question)?;
                 file_parsing::write_answer(&file, &a)?;
                 return Ok(true);
@@ -111,6 +123,7 @@ fn get_answer_from_args(question: &mut Question, file: &fs::File, question_chanc
             *question = "s: Rate your day out of ten".to_string().into();
 
             if a != DEFAULT_RATING.parse::<f64>().unwrap() {
+                file.write_all("\n".as_bytes())?;
                 file_parsing::write_question(&file, &question)?;
                 file_parsing::write_answer(&file, &a.to_string())?;
                 return Ok(true);
@@ -212,7 +225,7 @@ fn main() -> Result<()> {
         short: (DEFAULT_SHORT_CHANCE), long: (DEFAULT_LONG_CHANCE) 
     };
 
-    if get_answer_from_args(&mut question_to_ask, &file, &mut question_chances)? {
+    if parse_args(&mut question_to_ask, &mut file, &mut question_chances)? {
         return Ok(());
     }
 
