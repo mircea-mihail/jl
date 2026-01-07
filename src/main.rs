@@ -213,6 +213,9 @@ fn main() -> Result<()> {
         fs::write(&today_file_path, "")?;
         write_question_gap = false;
     }
+    if fs::metadata(&today_file_path)?.len() == 0 {
+        write_question_gap = false;
+    }
 
     let mut file: fs::File = OpenOptions::new()
         .write(true)    
