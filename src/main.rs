@@ -38,8 +38,8 @@ const DEFAULT_SOMETIMES: &str = "true";
 const DEFAULT_SHORT_CHANCE: f32 = 0.4;
 const DEFAULT_LONG_CHANCE: f32 = 0.6;
 
-const RARE_SHORT_CHANCE: f32 = 0.1;
-const RARE_LONG_CHANCE: f32 = 0.1;
+const RARE_SHORT_CHANCE: f32 = 0.3;
+const RARE_LONG_CHANCE: f32 = 0.2;
 
 #[derive(Parser)]
 struct Cli {
@@ -83,14 +83,12 @@ struct Cli {
     #[arg (
         short,
         long,
-        num_args = 0..=1,
+        num_args = 1,
     )]
-    update: Option<i32>,
+    update: Option<i64>,
 }
 
-fn parse_args(question: &mut Question, file: &mut fs::File, question_chances: &mut QuestionChances) -> io::Result<bool> {
-    let args = Cli::parse();
-
+fn parse_args(args: Cli, question: &mut Question, file: &mut fs::File, question_chances: &mut QuestionChances) -> io::Result<bool> {
     match args.description{
         Some(a) => {
             *question = "l: Talk about how your day was".to_string().into();
@@ -195,11 +193,27 @@ fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap   
     Ok(())
 }
 
+fn get_day_file_name(days_before: i64) -> String {
+    (chrono::offset::Local::now() - chrono::Duration::days(days_before))
+        .format("%Y-%m-%d.txt").to_string()
+}
+
 fn main() -> Result<()> {
+    let args = Cli::parse();
+
+    let mut days_before_today: i64 = 0;
+    match args.update {
+        Some(s) => {
+            println!("Update entry for {} days before", s);
+            days_before_today = s;
+        }
+        None => (),
+    }
+
     let mut jl_dir_path = home::home_dir().expect("Could not find home directory");
     jl_dir_path.push(JL_DIR_NAME);
 
-    let today_file= chrono::offset::Local::now().format("%Y-%m-%d.txt").to_string();
+    let today_file= get_day_file_name(days_before_today);
     let today_file_path = jl_dir_path.join(&today_file);
     let questions_file_path = jl_dir_path.join(QUESTION_FILE_NAME);
 
@@ -227,7 +241,7 @@ fn main() -> Result<()> {
         short: (DEFAULT_SHORT_CHANCE), long: (DEFAULT_LONG_CHANCE) 
     };
 
-    if parse_args(&mut question_to_ask, &mut file, &mut question_chances)? {
+    if parse_args(args, &mut question_to_ask, &mut file, &mut question_chances)? {
         return Ok(());
     }
 
