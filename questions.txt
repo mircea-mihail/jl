@@ -1,0 +1,10 @@
+s: Number of coffees? 
+s: Number of club mate?
+s: Grams of chocolate?
+s: Amount of candy?
+s: Went out (where)?
+s: Hours of guitar playing?
+s: What projects did you work on?
+
+l: What's a nice thing from today?
+l: What's a upsetting thing from today?
