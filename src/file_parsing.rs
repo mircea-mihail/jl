@@ -1,16 +1,19 @@
 use rand::Rng;
 use std::path::Path;
 
-use std::io::{self, Write};
 use std::fs;
+use std::io::{self, Write};
 
 use crate::question_structs::{Informative, Question, QuestionChances, QuestionType};
 
-fn get_question_vector(questions_path: &Path, get_type: &QuestionType) -> io::Result<Vec<Question>>{
+fn get_question_vector(
+    questions_path: &Path,
+    get_type: &QuestionType,
+) -> io::Result<Vec<Question>> {
     let all_questions = fs::read_to_string(questions_path)?;
     let all_questions_it = all_questions.split("\n");
 
-    let mut q_vec:Vec<Question>= Vec::new();
+    let mut q_vec: Vec<Question> = Vec::new();
 
     for question_str in all_questions_it {
         let question: Question = question_str.to_string().into();
@@ -25,11 +28,15 @@ fn get_question_vector(questions_path: &Path, get_type: &QuestionType) -> io::Re
 }
 
 // returns a vector of type that only has different questions than the ones in asked_questions
-fn get_unasked_question_vector(questions_path: &Path, get_type: &QuestionType, asked_questions: Vec<Question>) -> io::Result<Vec<Question>>{
+fn get_unasked_question_vector(
+    questions_path: &Path,
+    get_type: &QuestionType,
+    asked_questions: Vec<Question>,
+) -> io::Result<Vec<Question>> {
     let all_questions = fs::read_to_string(questions_path)?;
     let all_questions_it = all_questions.split("\n");
 
-    let mut q_vec:Vec<Question>= Vec::new();
+    let mut q_vec: Vec<Question> = Vec::new();
 
     for question_str in all_questions_it {
         let question: Question = question_str.to_string().into();
@@ -43,21 +50,24 @@ fn get_unasked_question_vector(questions_path: &Path, get_type: &QuestionType, a
     Ok(q_vec)
 }
 
-pub fn get_question(questions_path: &Path, today_file_path: &Path, question_chances: QuestionChances) -> io::Result<Question> {
+pub fn get_question(
+    questions_path: &Path,
+    today_file_path: &Path,
+    question_chances: QuestionChances,
+) -> io::Result<Question> {
     let mut rnd = rand::rng();
 
     let question_length_sample: f32 = rnd.random();
 
-    let question_type: QuestionType = match question_length_sample{
-        c if c < question_chances.short
-            => QuestionType::Short,
-        c if c < (question_chances.short + question_chances.long) 
-            => QuestionType::Long,
+    let question_type: QuestionType = match question_length_sample {
+        c if c < question_chances.short => QuestionType::Short,
+        c if c < (question_chances.short + question_chances.long) => QuestionType::Long,
         _ => return Ok(Question::default()),
     };
 
     let asked_questions = get_question_vector(&today_file_path, &question_type)?;
-    let unasked_questions = get_unasked_question_vector(questions_path, &question_type, asked_questions)?;
+    let unasked_questions =
+        get_unasked_question_vector(questions_path, &question_type, asked_questions)?;
 
     if unasked_questions.is_empty() {
         return Ok(Question::default());
@@ -71,7 +81,7 @@ pub fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<
     let today_file_path = jl_dir_path.join(&today_file);
 
     if !jl_dir_path.is_dir() {
-        match fs::create_dir(jl_dir_path){
+        match fs::create_dir(jl_dir_path) {
             Ok(()) => (),
             Err(e) => println!("error: {}", e),
         }
@@ -82,7 +92,9 @@ pub fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<
             let entry = entry?;
             let path = entry.path();
 
-            if path.extension().and_then(|ext| ext.to_str()) == Some("txt") && path == today_file_path {
+            if path.extension().and_then(|ext| ext.to_str()) == Some("txt")
+                && path == today_file_path
+            {
                 return Ok(true);
             }
         }
@@ -90,9 +102,14 @@ pub fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<
     Ok(false)
 }
 
-pub fn write_question(mut file: &fs::File, question: &Question) -> io::Result<()>{
+pub fn write_question(mut file: &fs::File, question: &Question) -> io::Result<()> {
     // write info point about the question
-    file.write_all(chrono::offset::Local::now().format("i: %H:%M\n").to_string().as_bytes())?;
+    file.write_all(
+        chrono::offset::Local::now()
+            .format("i: %H:%M\n")
+            .to_string()
+            .as_bytes(),
+    )?;
 
     // write the actual question
     file.write_all(question.get_type_as_str().as_bytes())?;

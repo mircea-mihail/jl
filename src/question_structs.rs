@@ -7,7 +7,7 @@ pub enum QuestionType {
     Short,
     Long,
     Answer,
-    Empty
+    Empty,
 }
 
 #[derive(Default, Debug)]
@@ -23,9 +23,7 @@ pub struct Question {
 
 impl From<String> for Question {
     fn from(s: String) -> Self {
-        Question {
-            question: s
-        }
+        Question { question: s }
     }
 }
 
@@ -35,18 +33,18 @@ impl fmt::Display for Question {
     }
 }
 
-pub trait Informative{
+pub trait Informative {
     fn get_type(&self) -> QuestionType;
-    fn get_type_as_str(&self) -> &str; 
+    fn get_type_as_str(&self) -> &str;
     fn get_text(&self) -> String;
 }
 
-impl Informative for Question{
+impl Informative for Question {
     fn get_type(&self) -> QuestionType {
         let question_type = self.question.get(..1).unwrap_or("");
         let follow_up_chars = self.question.get(1..3).unwrap_or("");
 
-        if follow_up_chars != QUESTION_TYPE_TRAIL{
+        if follow_up_chars != QUESTION_TYPE_TRAIL {
             return QuestionType::Empty;
         }
 
@@ -54,7 +52,7 @@ impl Informative for Question{
             "l" => QuestionType::Long,
             "s" => QuestionType::Short,
             "a" => QuestionType::Answer,
-            _ => QuestionType::Empty
+            _ => QuestionType::Empty,
         }
     }
 
@@ -62,7 +60,7 @@ impl Informative for Question{
         let question_type = self.question.get(..1).unwrap_or("");
         let follow_up_chars = self.question.get(1..3).unwrap_or("");
 
-        if follow_up_chars != QUESTION_TYPE_TRAIL{
+        if follow_up_chars != QUESTION_TYPE_TRAIL {
             return "";
         }
 
@@ -77,5 +75,4 @@ impl Informative for Question{
         let text = self.question.get(3..).unwrap_or("");
         text.to_string()
     }
-
 }
