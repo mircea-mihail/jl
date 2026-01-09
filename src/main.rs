@@ -1,4 +1,7 @@
 // todo and features to add:
+// change suggestion from julius (this document, comment on making the code a bit shorter)
+// make function that take vec:: as parameter only need a type that implements an iterator
+// make function that take question struct only need to take objects that implement informative trait
 // make the vim extension go to normal mode when pressing kj
 // make cursor different in insert and normal mode (| for insert, box for insert)
 // cool infopoint data: hour:minute, country, weather, degrees C
@@ -91,7 +94,7 @@ fn parse_args(
 ) -> io::Result<bool> {
     match args.description {
         Some(a) => {
-            *question = "l: Talk about how your day was".to_string().into();
+            *question = "l: Add a description about the day".to_string().into();
 
             if a != DEFAULT_DESCRIPTION {
                 file.write_all("\n".as_bytes())?;
@@ -104,7 +107,7 @@ fn parse_args(
     }
     match args.note {
         Some(a) => {
-            *question = "s: Write a short note during the day".to_string().into();
+            *question = "l: Add a note during the day".to_string().into();
 
             if a != DEFAULT_NOTE {
                 file.write_all("\n".as_bytes())?;
@@ -117,7 +120,7 @@ fn parse_args(
     }
     match args.rating {
         Some(a) => {
-            *question = "s: Rate your day out of ten".to_string().into();
+            *question = "s: Add a rating for your day out of ten".to_string().into();
 
             if a != DEFAULT_RATING.parse::<f64>().unwrap() {
                 file.write_all("\n".as_bytes())?;
