@@ -1,18 +1,23 @@
 // todo and features to add:
+// add README
+//
 // change suggestion from julius (this document, comment on making the code a bit shorter)
+//
 // make function that take vec:: as parameter only need a type that implements an iterator
 // make function that take question struct only need to take objects that implement informative trait
+//
 // make the vim extension go to normal mode when pressing kj
 // make cursor different in insert and normal mode (| for insert, box for insert)
+//
 // cool infopoint data: hour:minute, country, weather, degrees C
+//
 // when displaying summaries, only show the final rating given (and maybe use the other ones to show how the day evolved)
 //      if someone has a rating of 5 in the morning but a 8 in the afternoon maybe show how the day improved and print the updates (if available)
 // use flags to input things:
-//      jl -u to update x days before
 //      jl -w to show week notes
 //      jl -m to show months notes highlights
-//      think about how to show a table for short questions for the week
-//      and maybe something interactive with browsing longer notes?
+//      show a table/graph for short questions for the week
+//      and maybe something interactive with browsing longer notes/ a compilation of notes?
 
 mod question_structs;
 use question_structs::{Informative, Question, QuestionType};
