@@ -1,8 +1,6 @@
 // todo and features to add:
 // add README
 //
-// change suggestion from julius (this document, comment on making the code a bit shorter)
-//
 // make function that take vec:: as parameter only need a type that implements an iterator
 // make function that take question struct only need to take objects that implement informative trait
 //
@@ -136,28 +134,15 @@ fn parse_args(
         }
         None => (),
     }
-    //  args.rating.map(|a| {
-    //    *question = "s: Rate your day out of ten".to_string().into();
-
-    //     if a != DEFAULT_RATING.parse::<f64>().unwrap() {
-    //         file.write_all("\n".as_bytes())?;
-    //         file_parsing::write_question(&file, &question)?;
-    //         file_parsing::write_answer(&file, &a.to_string())?;
-    //         return Ok(true);
-    //     }
-    // })
-    match args.sometimes {
-        Some(s) => {
-            if s != DEFAULT_SOMETIMES.parse::<bool>().unwrap() {
-                question_chances.short = DEFAULT_SHORT_CHANCE;
-                question_chances.long = DEFAULT_LONG_CHANCE;
-            } else {
-                question_chances.short = RARE_SHORT_CHANCE;
-                question_chances.long = RARE_LONG_CHANCE;
-            }
+    args.sometimes.map(|s: bool| {
+        if s != DEFAULT_SOMETIMES.parse::<bool>().unwrap() {
+            question_chances.short = DEFAULT_SHORT_CHANCE;
+            question_chances.long = DEFAULT_LONG_CHANCE;
+        } else {
+            question_chances.short = RARE_SHORT_CHANCE;
+            question_chances.long = RARE_LONG_CHANCE;
         }
-        None => (),
-    }
+    });
 
     Ok(false)
 }
