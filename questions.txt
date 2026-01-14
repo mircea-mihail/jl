@@ -7,4 +7,4 @@ s: Hours of guitar playing?
 s: What projects did you work on?
 
 l: What's a nice thing from today?
-l: What's a upsetting thing from today?
+l: What's an upsetting thing from today?
