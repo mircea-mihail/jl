@@ -34,12 +34,23 @@ impl fmt::Display for Question {
 }
 
 pub trait Informative {
+    fn is_question(&self) -> bool;
     fn get_type(&self) -> QuestionType;
     fn get_type_as_str(&self) -> &str;
     fn get_text(&self) -> String;
 }
 
 impl Informative for Question {
+    fn is_question(&self) -> bool {
+        let question_type = self.get_type();
+        if question_type != QuestionType::Empty {
+            return true;
+        }
+
+        false
+    }
+
+
     fn get_type(&self) -> QuestionType {
         let question_type = self.question.get(..1).unwrap_or("");
         let follow_up_chars = self.question.get(1..3).unwrap_or("");
