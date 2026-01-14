@@ -1,13 +1,7 @@
 // todo and features to add:
-// add README
-//
-// make function that take vec:: as parameter only need a type that implements an iterator
-// make function that take question struct only need to take objects that implement informative trait
 //
 // make the vim extension go to normal mode when pressing kj
 // make cursor different in insert and normal mode (| for insert, box for insert)
-//
-// cool infopoint data: hour:minute, country, weather, degrees C
 //
 // when displaying summaries, only show the final rating given (and maybe use the other ones to show how the day evolved)
 //      if someone has a rating of 5 in the morning but a 8 in the afternoon maybe show how the day improved and print the updates (if available)
@@ -20,6 +14,7 @@
 mod question_structs;
 use question_structs::{Informative, Question, QuestionType};
 mod file_parsing;
+mod utility;
 
 use home;
 use std::fs;
@@ -189,12 +184,6 @@ fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap: b
     Ok(())
 }
 
-fn get_day_file_name(days_before: i64) -> String {
-    (chrono::offset::Local::now() - chrono::Duration::days(days_before))
-        .format("%Y-%m-%d.txt")
-        .to_string()
-}
-
 fn main() -> Result<()> {
     let args = Cli::parse();
 
@@ -210,7 +199,7 @@ fn main() -> Result<()> {
     let mut jl_dir_path = home::home_dir().expect("Could not find home directory");
     jl_dir_path.push(JL_DIR_NAME);
 
-    let today_file = get_day_file_name(days_before_today);
+    let today_file = utility::get_day_file_name(days_before_today);
     let today_file_path = jl_dir_path.join(&today_file);
     let questions_file_path = jl_dir_path.join(QUESTION_FILE_NAME);
 

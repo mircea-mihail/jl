@@ -2,9 +2,14 @@ use rand::Rng;
 use std::path::Path;
 
 use std::fs;
+use std::fs::OpenOptions;
 use std::io::{self, Write};
 
+use crate::utility;
+
 use crate::question_structs::{Informative, Question, QuestionChances, QuestionType};
+
+use rand::seq::SliceRandom; 
 
 fn get_question_vector(
     questions_path: &Path,
@@ -50,11 +55,45 @@ fn get_unasked_question_vector(
     Ok(q_vec)
 }
 
+fn generate_jumbled_questions_file(questions_path: &Path, jumbled_questions_path: &Path) -> io::Result<()>{
+    let questions_text = fs::read_to_string(questions_path)?;
+    let mut questions: Vec<Question> = Vec::new();
+    let mut rng = rand::rng();
+
+    for question in questions_text.split("\n").map(|a| <Question as From<_>>::from(a.to_string())) {
+        if question.is_question() {
+            questions.push(question);
+        }
+    }
+    questions.shuffle(&mut rng);
+
+    let mut file: fs::File = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(&jumbled_questions_path)?;
+
+    for quesiton in questions {
+        file.write(quesiton.to_string().as_bytes())?;
+        file.write("\n".as_bytes())?;
+    }
+    return Ok(());
+}
+
 pub fn get_question(
     questions_path: &Path,
     today_file_path: &Path,
     question_chances: QuestionChances,
 ) -> io::Result<Question> {
+    let jumbled_questions_path = std::path::PathBuf::from("/tmp")
+        .join(utility::get_day_file_name(0));
+
+    if !jumbled_questions_path.exists() {
+        fs::write(&jumbled_questions_path, "")?;
+    }
+    if jumbled_questions_path.metadata().map(|m| m.len()).unwrap_or(0) == 0 {
+        generate_jumbled_questions_file(&questions_path, &jumbled_questions_path)?;
+    }
+
     let mut rnd = rand::rng();
 
     let question_length_sample: f32 = rnd.random();
