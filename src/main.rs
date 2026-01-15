@@ -97,7 +97,7 @@ fn parse_args(
 ) -> io::Result<bool> {
     match args.description {
         Some(a) => {
-            *question = "l: Add a description about the day".to_string().into();
+            *question = "l: Add a description about the day:".to_string().into();
 
             if a != DEFAULT_DESCRIPTION {
                 file.write_all("\n".as_bytes())?;
@@ -110,7 +110,7 @@ fn parse_args(
     }
     match args.note {
         Some(a) => {
-            *question = "l: Add a note during the day".to_string().into();
+            *question = "l: Add a note during the day:".to_string().into();
 
             if a != DEFAULT_NOTE {
                 file.write_all("\n".as_bytes())?;
@@ -123,7 +123,7 @@ fn parse_args(
     }
     match args.rating {
         Some(a) => {
-            *question = "s: Add a rating for your day out of ten".to_string().into();
+            *question = "s: Add a rating for your day out of ten:".to_string().into();
 
             if a != DEFAULT_RATING.parse::<f64>().unwrap() {
                 file.write_all("\n".as_bytes())?;
