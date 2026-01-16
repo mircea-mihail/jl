@@ -39,7 +39,7 @@ pub fn get_question(
     questions_path: &Path,
 ) -> io::Result<Question> {
     let jumbled_questions_path = std::path::PathBuf::from("/tmp")
-        .join(utility::get_day_file_name(0));
+        .join( "jl-".to_string() + &utility::get_day_file_name(0));
 
     if !jumbled_questions_path.exists() {
         fs::write(&jumbled_questions_path, "")?;
