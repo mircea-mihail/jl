@@ -236,8 +236,7 @@ fn main() -> Result<()> {
     }
 
     if question_to_ask == Question::default() {
-        question_to_ask =
-            file_parsing::get_question(&questions_file_path, &today_file_path, question_chances)?;
+        question_to_ask = file_parsing::get_question(&questions_file_path)?;
     }
 
     if question_to_ask == Question::default() {
