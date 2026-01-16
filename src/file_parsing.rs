@@ -1,80 +1,81 @@
-use rand::Rng;
 use std::path::Path;
 
 use std::fs;
+use std::fs::OpenOptions;
 use std::io::{self, Write};
+use std::io::{Error, ErrorKind};
 
-use crate::question_structs::{Informative, Question, QuestionChances, QuestionType};
+use crate::utility;
 
-fn get_question_vector(
-    questions_path: &Path,
-    get_type: &QuestionType,
-) -> io::Result<Vec<Question>> {
-    let all_questions = fs::read_to_string(questions_path)?;
-    let all_questions_it = all_questions.split("\n");
+use crate::question_structs::{Informative, Question};
 
-    let mut q_vec: Vec<Question> = Vec::new();
+use rand::seq::SliceRandom; 
 
-    for question_str in all_questions_it {
-        let question: Question = question_str.to_string().into();
-        let question_type = question.get_type();
+fn generate_jumbled_questions_file(questions_path: &Path, jumbled_questions_path: &Path) -> io::Result<()>{
+    let questions_text = fs::read_to_string(questions_path)?;
+    let mut questions: Vec<Question> = Vec::new();
+    let mut rng = rand::rng();
 
-        if get_type == &question_type {
-            q_vec.push(question);
+    for question in questions_text.split("\n").map(|a| <Question as From<_>>::from(a.to_string())) {
+        if question.is_question() {
+            questions.push(question);
         }
     }
+    questions.shuffle(&mut rng);
 
-    Ok(q_vec)
-}
+    let mut file: fs::File = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(&jumbled_questions_path)?;
 
-// returns a vector of type that only has different questions than the ones in asked_questions
-fn get_unasked_question_vector(
-    questions_path: &Path,
-    get_type: &QuestionType,
-    asked_questions: Vec<Question>,
-) -> io::Result<Vec<Question>> {
-    let all_questions = fs::read_to_string(questions_path)?;
-    let all_questions_it = all_questions.split("\n");
-
-    let mut q_vec: Vec<Question> = Vec::new();
-
-    for question_str in all_questions_it {
-        let question: Question = question_str.to_string().into();
-        let question_type = question.get_type();
-
-        if get_type == &question_type && !asked_questions.contains(&question) {
-            q_vec.push(question);
-        }
+    for quesiton in questions {
+        file.write(quesiton.to_string().as_bytes())?;
+        file.write("\n".as_bytes())?;
     }
-
-    Ok(q_vec)
+    return Ok(());
 }
 
 pub fn get_question(
     questions_path: &Path,
-    today_file_path: &Path,
-    question_chances: QuestionChances,
 ) -> io::Result<Question> {
-    let mut rnd = rand::rng();
+    let jumbled_questions_path = std::path::PathBuf::from("/tmp")
+        .join( "jl-".to_string() + &utility::get_day_file_name(0));
 
-    let question_length_sample: f32 = rnd.random();
-
-    let question_type: QuestionType = match question_length_sample {
-        c if c < question_chances.short => QuestionType::Short,
-        c if c < (question_chances.short + question_chances.long) => QuestionType::Long,
-        _ => return Ok(Question::default()),
-    };
-
-    let asked_questions = get_question_vector(&today_file_path, &question_type)?;
-    let unasked_questions =
-        get_unasked_question_vector(questions_path, &question_type, asked_questions)?;
-
-    if unasked_questions.is_empty() {
-        return Ok(Question::default());
+    if !jumbled_questions_path.exists() {
+        fs::write(&jumbled_questions_path, "")?;
+    }
+    if jumbled_questions_path.metadata().map(|m| m.len()).unwrap_or(0) == 0 {
+        generate_jumbled_questions_file(&questions_path, &jumbled_questions_path)?;
     }
 
-    let small_question_sample: usize = (rnd.random_range(..unasked_questions.len())) as usize;
-    return Ok(unasked_questions[small_question_sample].clone());
+    let all_questions = fs::read_to_string(&jumbled_questions_path)?;
+
+    let mut file: fs::File = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(&jumbled_questions_path)?;
+
+    let number_of_quesions = all_questions.lines().count();
+    let unconsumed_string: String = all_questions
+        .lines()
+        .take(number_of_quesions - 1)
+        .fold(String::new(), |mut acc, line| {
+            if !acc.is_empty() {
+                acc.push('\n');
+            }
+            acc.push_str(line);
+            acc
+        });
+
+    file.write(unconsumed_string.as_bytes())?;
+
+    Ok(all_questions
+        .lines()
+        .last()
+        .ok_or(Error::new(ErrorKind::InvalidData, "no questions found"))?
+        .to_string()
+        .into()
+    )
 }
 
 pub fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<bool> {
