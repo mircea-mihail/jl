@@ -17,6 +17,7 @@ mod file_parsing;
 mod utility;
 
 use home;
+use rand::Rng;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::{self, Write};
@@ -24,8 +25,6 @@ use std::io::{self, Write};
 use clap::Parser;
 use rustyline::error::ReadlineError;
 use rustyline::{Config, DefaultEditor, EditMode, Result};
-
-use crate::question_structs::QuestionChances;
 
 const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
@@ -35,11 +34,7 @@ const DEFAULT_NOTE: &str = "No note provided";
 const DEFAULT_RATING: &str = "1212.1212";
 const DEFAULT_SOMETIMES: &str = "true";
 
-const DEFAULT_SHORT_CHANCE: f32 = 0.4;
-const DEFAULT_LONG_CHANCE: f32 = 0.6;
-
-const RARE_SHORT_CHANCE: f32 = 0.3;
-const RARE_LONG_CHANCE: f32 = 0.2;
+const QUESTION_CHANCE: f64 = 0.5;
 
 #[derive(Parser)]
 struct Cli {
@@ -88,7 +83,7 @@ fn parse_args(
     args: Cli,
     question: &mut Question,
     file: &mut fs::File,
-    question_chances: &mut QuestionChances,
+    question_chance: &mut f64,
 ) -> io::Result<bool> {
     match args.description {
         Some(a) => {
@@ -130,12 +125,8 @@ fn parse_args(
         None => (),
     }
     args.sometimes.map(|s: bool| {
-        if s != DEFAULT_SOMETIMES.parse::<bool>().unwrap() {
-            question_chances.short = DEFAULT_SHORT_CHANCE;
-            question_chances.long = DEFAULT_LONG_CHANCE;
-        } else {
-            question_chances.short = RARE_SHORT_CHANCE;
-            question_chances.long = RARE_LONG_CHANCE;
+        if s == DEFAULT_SOMETIMES.parse::<bool>().unwrap() {
+            *question_chance = QUESTION_CHANCE;
         }
     });
 
@@ -226,16 +217,15 @@ fn main() -> Result<()> {
         .open(&today_file_path)?;
 
     let mut question_to_ask: Question = Question::default();
-    let mut question_chances: QuestionChances = QuestionChances {
-        short: (DEFAULT_SHORT_CHANCE),
-        long: (DEFAULT_LONG_CHANCE),
-    };
+    let mut question_chance: f64 = 1.0;
 
-    if parse_args(args, &mut question_to_ask, &mut file, &mut question_chances)? {
+    if parse_args(args, &mut question_to_ask, &mut file, &mut question_chance)? {
         return Ok(());
     }
 
-    if question_to_ask == Question::default() {
+    let mut rng = rand::rng();
+
+    if question_to_ask == Question::default() && rng.random::<f64>() > question_chance{
         question_to_ask = file_parsing::get_question(&questions_file_path)?;
     }
 

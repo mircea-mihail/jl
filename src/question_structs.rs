@@ -10,12 +10,6 @@ pub enum QuestionType {
     Empty,
 }
 
-#[derive(Default, Debug)]
-pub struct QuestionChances {
-    pub short: f32,
-    pub long: f32,
-}
-
 #[derive(PartialEq, Default, Clone, Debug)]
 pub struct Question {
     pub question: String,
