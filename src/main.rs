@@ -181,8 +181,9 @@ fn main() -> Result<()> {
     let mut days_before_today: i64 = 0;
     match args.update {
         Some(s) => {
-            println!("Update entry for {} days before", s);
             days_before_today = s;
+            // println!("Update entry for {}", utility::get_day_file_name(days_before_today).split(".").next().unwrap_or("unknown date."));
+            println!("Update entry for {}:", (chrono::offset::Local::now() - chrono::Duration::days(days_before_today)).format("%d %b %Y") .to_string());
         }
         None => (),
     }
@@ -225,7 +226,7 @@ fn main() -> Result<()> {
 
     let mut rng = rand::rng();
 
-    if question_to_ask == Question::default() && rng.random::<f64>() > question_chance{
+    if question_to_ask == Question::default() && rng.random::<f64>() < question_chance{
         question_to_ask = file_parsing::get_question(&questions_file_path)?;
     }
 
