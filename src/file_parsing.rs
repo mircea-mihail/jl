@@ -11,6 +11,8 @@ use crate::question_structs::{Informative, Question};
 
 use rand::seq::SliceRandom; 
 
+use xxhash_rust::xxh3::xxh3_128;
+
 fn generate_jumbled_questions_file(questions_path: &Path, jumbled_questions_path: &Path) -> io::Result<()>{
     let questions_text = fs::read_to_string(questions_path)?;
     let mut questions: Vec<Question> = Vec::new();
@@ -38,8 +40,11 @@ fn generate_jumbled_questions_file(questions_path: &Path, jumbled_questions_path
 pub fn get_question(
     questions_path: &Path,
 ) -> io::Result<Question> {
+    let hash = xxh3_128(&utility::get_day_file_name(0).as_bytes());
+    let hashed_string = format!("{:032x}", hash)[..15].to_string();
+
     let jumbled_questions_path = std::path::PathBuf::from("/tmp")
-        .join( "jl-".to_string() + &utility::get_day_file_name(0));
+        .join( "jl-".to_string() + &hashed_string + "-" + &utility::get_day_file_name(0));
 
     if !jumbled_questions_path.exists() {
         fs::write(&jumbled_questions_path, "")?;
