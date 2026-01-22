@@ -204,20 +204,23 @@ fn main() -> Result<(), MinusError> {
 
     ////////////////////////////////////////////////////////////////////////////////////
     let dir_files = fs::read_dir(jl_dir_path)?;
+    let mut journal_paths: Vec<std::path::PathBuf> = Vec::new();
     for file in dir_files {
         let path = file?.path();
 
         if let Some(stem) = path.file_stem() {
-            
             let string_split_stem = stem.to_string_lossy();
             let stem_vec: Vec<&str> = string_split_stem.split("-").collect();
-            if stem_vec.len() == 3 {
-                println!("jl dir paht {}", stem_vec[0]);
+            if stem_vec.len() == 3 && stem_vec[0].len() == 4 && stem_vec[1].len() == 2 && stem_vec[2].len() == 2 {
+                journal_paths.push(path);
             }
         }
     }
+    journal_paths.sort();
+    let current_idx = journal_paths.len() - 1;
+    println!("jl paths:{:?}", journal_paths);
     
-    let day_file_content= fs::read_to_string(&today_file_path)?;
+    let day_file_content= fs::read_to_string(&journal_paths[current_idx])?;
 
     // Initialize the pager
     let pager = Pager::new();
