@@ -12,6 +12,7 @@
 //      and maybe something interactive with browsing longer notes/ a compilation of notes?
 
 mod question_structs;
+use crossterm::terminal::DisableLineWrap;
 use question_structs::{Informative, Question, QuestionType};
 mod file_parsing;
 mod utility;
@@ -182,38 +183,6 @@ fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap: b
 }
 
 fn main() -> Result<(), MinusError> {
-    let text_to_show = "i: 10:18
-l: What's an upsetting thing from today?
-a: am dormit doar 5 ore sa pot sa ma trezesc sa fac la ssa
-
-i: 11:43
-s: Grams of chocolate?
-a: 0
-
-i: 12:52
-s: Hours on phone?
-a: 2.5
-
-i: 13:30
-s: Hours of sleep?
-a: 6
-
-i: 13:52
-l: Add a note during the day:
-a: Showing felix jl :) ";
-
-    // Initialize the pager
-    let pager = Pager::new();
-    // Run the pager in a separate thread
-    let pager2 = pager.clone();
-    let pager_thread = spawn(move || dynamic_paging(pager2));
-
-    for line in text_to_show.lines() {
-        pager.push_str(line.to_string() + "\n")?;
-    }
-    pager_thread.join().unwrap()?;
-    return Ok(());
-
     let args = Cli::parse();
 
     let mut days_before_today: i64 = 0;
@@ -232,6 +201,36 @@ a: Showing felix jl :) ";
     let today_file = utility::get_day_file_name(days_before_today);
     let today_file_path = jl_dir_path.join(&today_file);
     let questions_file_path = jl_dir_path.join(QUESTION_FILE_NAME);
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    let dir_files = fs::read_dir(jl_dir_path)?;
+    for file in dir_files {
+        let path = file?.path();
+
+        if let Some(stem) = path.file_stem() {
+            
+            let string_split_stem = stem.to_string_lossy();
+            let stem_vec: Vec<&str> = string_split_stem.split("-").collect();
+            if stem_vec.len() == 3 {
+                println!("jl dir paht {}", stem_vec[0]);
+            }
+        }
+    }
+    
+    let day_file_content= fs::read_to_string(&today_file_path)?;
+
+    // Initialize the pager
+    let pager = Pager::new();
+    // Run the pager in a separate thread
+    let pager2 = pager.clone();
+    let pager_thread = spawn(move || dynamic_paging(pager2));
+
+    for line in day_file_content.lines() {
+        pager.push_str(line.to_string() + "\n")?;
+    }
+    pager_thread.join().unwrap()?;
+    return Ok(());
+    ////////////////////////////////////////////////////////////////////////////////////
 
     let mut write_question_gap = true;
 
