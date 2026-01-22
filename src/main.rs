@@ -24,7 +24,7 @@ use std::io::{self, Write};
 
 use clap::Parser;
 use rustyline::error::ReadlineError;
-use rustyline::{Config, DefaultEditor, EditMode, Result};
+use rustyline::{Config, DefaultEditor, EditMode};
 
 const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
@@ -35,6 +35,12 @@ const DEFAULT_RATING: &str = "1212.1212";
 const DEFAULT_SOMETIMES: &str = "true";
 
 const QUESTION_CHANCE: f64 = 0.5;
+
+use minus::{dynamic_paging, MinusError, Pager};
+use std::{
+    thread::{spawn, sleep},
+    time::Duration
+};
 
 #[derive(Parser)]
 struct Cli {
@@ -133,7 +139,7 @@ fn parse_args(
     Ok(false)
 }
 
-fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap: bool) -> Result<()> {
+fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap: bool) -> rustyline::Result<()> {
     println!("{}", question.get_text());
 
     let config = Config::builder().edit_mode(EditMode::Vi).build();
@@ -175,7 +181,39 @@ fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap: b
     Ok(())
 }
 
-fn main() -> Result<()> {
+fn main() -> Result<(), MinusError> {
+    let text_to_show = "i: 10:18
+l: What's an upsetting thing from today?
+a: am dormit doar 5 ore sa pot sa ma trezesc sa fac la ssa
+
+i: 11:43
+s: Grams of chocolate?
+a: 0
+
+i: 12:52
+s: Hours on phone?
+a: 2.5
+
+i: 13:30
+s: Hours of sleep?
+a: 6
+
+i: 13:52
+l: Add a note during the day:
+a: Showing felix jl :) ";
+
+    // Initialize the pager
+    let pager = Pager::new();
+    // Run the pager in a separate thread
+    let pager2 = pager.clone();
+    let pager_thread = spawn(move || dynamic_paging(pager2));
+
+    for line in text_to_show.lines() {
+        pager.push_str(line.to_string() + "\n")?;
+    }
+    pager_thread.join().unwrap()?;
+    return Ok(());
+
     let args = Cli::parse();
 
     let mut days_before_today: i64 = 0;
@@ -234,7 +272,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    run_input_loop(question_to_ask, &mut file, write_question_gap)?;
+    run_input_loop(question_to_ask, &mut file, write_question_gap);
 
     Ok(())
 }
