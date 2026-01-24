@@ -30,9 +30,11 @@ use rustyline::error::ReadlineError;
 use rustyline::{Config, DefaultEditor, EditMode};
 
 use crossterm::{
-    execute, queue,
-    style::{self, Stylize}, cursor, terminal,
+    cursor,
     event::{self, Event, KeyCode},
+    execute, queue,
+    style::{self, Stylize},
+    terminal,
 };
 
 const JL_DIR_NAME: &str = ".jl";
@@ -122,7 +124,9 @@ fn parse_args(
     }
     match args.rating {
         Some(a) => {
-            *question = "s: Add a rating for your day out of ten:".to_string().into();
+            *question = "s: Add a rating for your day out of ten:"
+                .to_string()
+                .into();
 
             if a != DEFAULT_RATING.parse::<f64>().unwrap() {
                 file.write_all("\n".as_bytes())?;
@@ -142,7 +146,11 @@ fn parse_args(
     Ok(false)
 }
 
-fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap: bool) -> rustyline::Result<()> {
+fn run_input_loop(
+    question: Question,
+    file: &mut fs::File,
+    write_question_gap: bool,
+) -> rustyline::Result<()> {
     println!("{}", question.get_text());
 
     let config = Config::builder().edit_mode(EditMode::Vi).build();
@@ -184,32 +192,49 @@ fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap: b
     Ok(())
 }
 
-fn write_content(path: &std::path::PathBuf, mut stdout: &io::Stdout) -> rustyline::Result<()>{
-    let content = fs::read_to_string(path)?;
-
+fn write_content(path: &std::path::PathBuf, mut stdout: &io::Stdout) -> rustyline::Result<()> {
     execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
 
-    let mut line_x ;
+    let mut line_x = 0;
     let mut line_y = 0;
+
+    let content = fs::read_to_string(path)?;
+    let mut path_str = "";
+
+    if let Some(stem_os) = path.file_stem() {
+        if let Some(stem_str) = stem_os.to_str() {
+            path_str = stem_str;
+        }
+    }
+    queue!(
+        stdout,
+        cursor::MoveTo(line_x as u16, line_y),
+        style::PrintStyledContent(path_str.white())
+    )?;
+    line_y += 2;
 
     let (term_width, _) = terminal::size()?;
 
     for line in content.lines() {
         line_x = 0;
-        
-        for mut word in line.split(" "){
+
+        for mut word in line.split(" ") {
             let word_length = word.len();
-            
-            if word_length > term_width as usize{
-                word = &word[.. (term_width) as usize];
+
+            if word_length > term_width as usize {
+                word = &word[..(term_width) as usize];
             }
 
-            if word_length + line_x > term_width as usize{
+            if word_length + line_x > term_width as usize {
                 line_y += 1;
                 line_x = 0;
-            } 
+            }
 
-            queue!(stdout, cursor::MoveTo(line_x as u16, line_y), style::PrintStyledContent(word.white()))?;
+            queue!(
+                stdout,
+                cursor::MoveTo(line_x as u16, line_y),
+                style::PrintStyledContent(word.white())
+            )?;
             line_x += word_length + 1;
         }
         line_y += 1;
@@ -228,13 +253,18 @@ fn main() -> rustyline::Result<()> {
         Some(s) => {
             days_before_today = s;
             // println!("Update entry for {}", utility::get_day_file_name(days_before_today).split(".").next().unwrap_or("unknown date."));
-            println!("Update entry for {}:", (chrono::offset::Local::now() - chrono::Duration::days(days_before_today)).format("%d %b %Y") .to_string());
+            println!(
+                "Update entry for {}:",
+                (chrono::offset::Local::now() - chrono::Duration::days(days_before_today))
+                    .format("%d %b %Y")
+                    .to_string()
+            );
         }
         None => (),
     }
 
     let mut jl_dir_path = home::home_dir().expect("Could not find home directory");
-   jl_dir_path.push(JL_DIR_NAME);
+    jl_dir_path.push(JL_DIR_NAME);
 
     let today_file = utility::get_day_file_name(days_before_today);
     let today_file_path = jl_dir_path.join(&today_file);
@@ -249,7 +279,11 @@ fn main() -> rustyline::Result<()> {
         if let Some(stem) = path.file_stem() {
             let string_split_stem = stem.to_string_lossy();
             let stem_vec: Vec<&str> = string_split_stem.split("-").collect();
-            if stem_vec.len() == 3 && stem_vec[0].len() == 4 && stem_vec[1].len() == 2 && stem_vec[2].len() == 2 {
+            if stem_vec.len() == 3
+                && stem_vec[0].len() == 4
+                && stem_vec[1].len() == 2
+                && stem_vec[2].len() == 2
+            {
                 journal_paths.push(path);
             }
         }
@@ -258,11 +292,11 @@ fn main() -> rustyline::Result<()> {
     let idx_max_len = journal_paths.len() - 1;
     let mut current_idx = idx_max_len;
     let mut state_changed = false;
-    
+
     let mut stdout = io::stdout();
 
-    terminal::enable_raw_mode()?;           
-    execute!(stdout, terminal::EnterAlternateScreen)?; 
+    terminal::enable_raw_mode()?;
+    execute!(stdout, terminal::EnterAlternateScreen)?;
 
     write_content(&journal_paths[current_idx], &stdout)?;
 
@@ -276,15 +310,13 @@ fn main() -> rustyline::Result<()> {
                 KeyCode::Char('h') => {
                     if current_idx == 0 {
                         current_idx = idx_max_len
-                    }
-                    else {
+                    } else {
                         current_idx -= 1;
                     }
                     state_changed = true;
                 }
                 KeyCode::Char('q') => break,
                 _ => {}
-                
             }
         }
 
@@ -293,9 +325,6 @@ fn main() -> rustyline::Result<()> {
             current_idx = current_idx % (idx_max_len + 1);
 
             write_content(&journal_paths[current_idx], &stdout)?;
-
-            queue!(stdout, cursor::MoveTo(0, 0), style::PrintStyledContent(format!{"{}", current_idx}.white()))?;
-            std::io::stdout().flush()?;
         }
     }
 
@@ -337,7 +366,7 @@ fn main() -> rustyline::Result<()> {
 
     let mut rng = rand::rng();
 
-    if question_to_ask == Question::default() && rng.random::<f64>() < question_chance{
+    if question_to_ask == Question::default() && rng.random::<f64>() < question_chance {
         question_to_ask = file_parsing::get_question(&questions_file_path)?;
     }
 
