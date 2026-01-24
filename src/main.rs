@@ -19,13 +19,21 @@ mod utility;
 
 use home;
 use rand::Rng;
+use std::env::current_dir;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::{self, Write};
+use std::thread::current;
 
 use clap::Parser;
 use rustyline::error::ReadlineError;
 use rustyline::{Config, DefaultEditor, EditMode};
+
+use crossterm::{
+    execute, queue,
+    style::{self, Stylize}, cursor, terminal,
+    event::{self, Event, KeyCode},
+};
 
 const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
@@ -36,12 +44,6 @@ const DEFAULT_RATING: &str = "1212.1212";
 const DEFAULT_SOMETIMES: &str = "true";
 
 const QUESTION_CHANCE: f64 = 0.5;
-
-use minus::{dynamic_paging, MinusError, Pager};
-use std::{
-    thread::{spawn, sleep},
-    time::Duration
-};
 
 #[derive(Parser)]
 struct Cli {
@@ -182,7 +184,22 @@ fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap: b
     Ok(())
 }
 
-fn main() -> Result<(), MinusError> {
+fn write_content(content: &str, mut stdout: &io::Stdout) -> rustyline::Result<()>{
+    execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
+
+    let line_x = 1;
+    let mut line_y = 1;
+    for line in content.lines() {
+        queue!(stdout, cursor::MoveTo(line_x, line_y), style::PrintStyledContent(line.white()))?;
+        line_y += 1;
+    }
+
+    std::io::stdout().flush()?;
+
+    Ok(())
+}
+
+fn main() -> rustyline::Result<()> {
     let args = Cli::parse();
 
     let mut days_before_today: i64 = 0;
@@ -196,7 +213,7 @@ fn main() -> Result<(), MinusError> {
     }
 
     let mut jl_dir_path = home::home_dir().expect("Could not find home directory");
-    jl_dir_path.push(JL_DIR_NAME);
+   jl_dir_path.push(JL_DIR_NAME);
 
     let today_file = utility::get_day_file_name(days_before_today);
     let today_file_path = jl_dir_path.join(&today_file);
@@ -217,21 +234,57 @@ fn main() -> Result<(), MinusError> {
         }
     }
     journal_paths.sort();
-    let current_idx = journal_paths.len() - 1;
-    println!("jl paths:{:?}", journal_paths);
+    let idx_max_len = journal_paths.len() - 1;
+    let mut current_idx = idx_max_len;
+    let mut state_changed = false;
     
-    let day_file_content= fs::read_to_string(&journal_paths[current_idx])?;
+    let mut day_file_content= fs::read_to_string(&journal_paths[current_idx])?;
 
-    // Initialize the pager
-    let pager = Pager::new();
-    // Run the pager in a separate thread
-    let pager2 = pager.clone();
-    let pager_thread = spawn(move || dynamic_paging(pager2));
+    let mut stdout = io::stdout();
 
-    for line in day_file_content.lines() {
-        pager.push_str(line.to_string() + "\n")?;
+    terminal::enable_raw_mode()?;           
+    execute!(stdout, terminal::EnterAlternateScreen)?; 
+
+    write_content(&day_file_content, &stdout)?;
+
+    loop {
+        if let Event::Key(key) = event::read()? {
+            match key.code {
+                KeyCode::Char('l') => {
+                    current_idx += 1;
+                    state_changed = true;
+                }
+                KeyCode::Char('h') => {
+                    if current_idx == 0 {
+                        current_idx = idx_max_len
+                    }
+                    else {
+                        current_idx -= 1;
+                    }
+                    state_changed = true;
+                }
+                KeyCode::Char('q') => break,
+                _ => {}
+                
+            }
+        }
+
+        if state_changed {
+            state_changed = false;
+            current_idx = current_idx % (idx_max_len + 1);
+
+            day_file_content = fs::read_to_string(&journal_paths[current_idx])?;
+            write_content(&day_file_content, &stdout)?;
+
+            queue!(stdout, cursor::MoveTo(0, 0), style::PrintStyledContent(format!{"{}", current_idx}.white()))?;
+            std::io::stdout().flush()?;
+        }
     }
-    pager_thread.join().unwrap()?;
+
+    execute!(stdout, terminal::LeaveAlternateScreen)?;
+    terminal::disable_raw_mode()?;
+
+    stdout.flush()?;
     return Ok(());
     ////////////////////////////////////////////////////////////////////////////////////
 
