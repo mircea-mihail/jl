@@ -184,13 +184,34 @@ fn run_input_loop(question: Question, file: &mut fs::File, write_question_gap: b
     Ok(())
 }
 
-fn write_content(content: &str, mut stdout: &io::Stdout) -> rustyline::Result<()>{
+fn write_content(path: &std::path::PathBuf, mut stdout: &io::Stdout) -> rustyline::Result<()>{
+    let content = fs::read_to_string(path)?;
+
     execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
 
-    let line_x = 1;
-    let mut line_y = 1;
+    let mut line_x ;
+    let mut line_y = 0;
+
+    let (term_width, _) = terminal::size()?;
+
     for line in content.lines() {
-        queue!(stdout, cursor::MoveTo(line_x, line_y), style::PrintStyledContent(line.white()))?;
+        line_x = 0;
+        
+        for mut word in line.split(" "){
+            let word_length = word.len();
+            
+            if word_length > term_width as usize{
+                word = &word[.. (term_width) as usize];
+            }
+
+            if word_length + line_x > term_width as usize{
+                line_y += 1;
+                line_x = 0;
+            } 
+
+            queue!(stdout, cursor::MoveTo(line_x as u16, line_y), style::PrintStyledContent(word.white()))?;
+            line_x += word_length + 1;
+        }
         line_y += 1;
     }
 
@@ -238,14 +259,12 @@ fn main() -> rustyline::Result<()> {
     let mut current_idx = idx_max_len;
     let mut state_changed = false;
     
-    let mut day_file_content= fs::read_to_string(&journal_paths[current_idx])?;
-
     let mut stdout = io::stdout();
 
     terminal::enable_raw_mode()?;           
     execute!(stdout, terminal::EnterAlternateScreen)?; 
 
-    write_content(&day_file_content, &stdout)?;
+    write_content(&journal_paths[current_idx], &stdout)?;
 
     loop {
         if let Event::Key(key) = event::read()? {
@@ -273,8 +292,7 @@ fn main() -> rustyline::Result<()> {
             state_changed = false;
             current_idx = current_idx % (idx_max_len + 1);
 
-            day_file_content = fs::read_to_string(&journal_paths[current_idx])?;
-            write_content(&day_file_content, &stdout)?;
+            write_content(&journal_paths[current_idx], &stdout)?;
 
             queue!(stdout, cursor::MoveTo(0, 0), style::PrintStyledContent(format!{"{}", current_idx}.white()))?;
             std::io::stdout().flush()?;
