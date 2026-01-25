@@ -1,0 +1,128 @@
+use crate::question_structs::{Informative, Question, QuestionType};
+use crate::file_parsing;
+use crate::utility;
+
+use std::io::{self, Write};
+
+use std::fs;
+
+use rustyline::error::ReadlineError;
+use rustyline::{Config, DefaultEditor, EditMode};
+
+use crossterm::{
+    event::{self, Event, KeyCode},
+    execute,
+    terminal,
+};
+
+
+pub fn get_input(
+    question: Question,
+    file: &mut fs::File,
+    write_question_gap: bool,
+) -> rustyline::Result<()> {
+    println!("{}", question.get_text());
+
+    let config = Config::builder().edit_mode(EditMode::Vi).build();
+    let mut rl = DefaultEditor::with_config(config)?;
+
+    let mut wrote_quesiton = false;
+
+    loop {
+        let readline = rl.readline(">> ");
+        match readline {
+            Ok(line) => {
+                if line == "".to_string() {
+                    break;
+                }
+                if !wrote_quesiton {
+                    if write_question_gap {
+                        file.write_all("\n".as_bytes())?;
+                    }
+
+                    file_parsing::write_question(&file, &question)?;
+                    wrote_quesiton = true;
+                }
+
+                file_parsing::write_answer(&file, &line)?;
+
+                if question.get_type() == QuestionType::Short {
+                    break;
+                }
+            }
+            Err(ReadlineError::Interrupted) => break,
+            Err(ReadlineError::Eof) => break,
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
+    let dir_files = fs::read_dir(jl_dir_path)?;
+    let mut journal_paths: Vec<std::path::PathBuf> = Vec::new();
+    for file in dir_files {
+        let path = file?.path();
+
+        if let Some(stem) = path.file_stem() {
+            let string_split_stem = stem.to_string_lossy();
+            let stem_vec: Vec<&str> = string_split_stem.split("-").collect();
+            if stem_vec.len() == 3
+                && stem_vec[0].len() == 4
+                && stem_vec[1].len() == 2
+                && stem_vec[2].len() == 2
+            {
+                journal_paths.push(path);
+            }
+        }
+    }
+    journal_paths.sort();
+    let idx_max_len = journal_paths.len() - 1;
+    let mut current_idx = idx_max_len;
+    let mut state_changed = false;
+
+    let mut stdout = io::stdout();
+
+    terminal::enable_raw_mode()?;
+    execute!(stdout, terminal::EnterAlternateScreen)?;
+
+    utility::write_content(&journal_paths[current_idx], &stdout)?;
+
+    loop {
+        if let Event::Key(key) = event::read()? {
+            match key.code {
+                KeyCode::Char('l') => {
+                    current_idx += 1;
+                    state_changed = true;
+                }
+                KeyCode::Char('h') => {
+                    if current_idx == 0 {
+                        current_idx = idx_max_len
+                    } else {
+                        current_idx -= 1;
+                    }
+                    state_changed = true;
+                }
+                KeyCode::Char('q') => break,
+                _ => {}
+            }
+        }
+
+        if state_changed {
+            state_changed = false;
+            current_idx = current_idx % (idx_max_len + 1);
+
+            utility::write_content(&journal_paths[current_idx], &stdout)?;
+        }
+    }
+
+    execute!(stdout, terminal::LeaveAlternateScreen)?;
+    terminal::disable_raw_mode()?;
+
+    stdout.flush()?;
+    return Ok(());
+}
