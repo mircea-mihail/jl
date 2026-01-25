@@ -1,0 +1,132 @@
+use crate::file_parsing;
+use crate::question_structs::{Question};
+
+use clap::Parser;
+use std::io::{Write};
+
+const DEFAULT_DESCRIPTION: &str = "No description provided";
+const DEFAULT_NOTE: &str = "No note provided";
+const DEFAULT_RATING: &str = "1212.1212";
+const DEFAULT_SOMETIMES: &str = "true";
+
+const QUESTION_CHANCE: f64 = 0.5;
+
+#[derive(Parser)]
+pub struct Cli {
+    /// Talk about how your day was
+    #[arg(
+        short,
+        long,
+        num_args = 0..=1,
+        default_missing_value = DEFAULT_DESCRIPTION
+    )]
+    description: Option<String>,
+
+    /// Add a short note during the day
+    #[arg(
+        short,
+        long,
+        num_args = 0..=1,
+        default_missing_value = DEFAULT_NOTE
+    )]
+    note: Option<String>,
+
+    /// Rate your day out of 10 (can be any number)
+    #[arg(
+        short,
+        long,
+        num_args = 0..=1,
+        default_missing_value = DEFAULT_RATING
+    )]
+    rating: Option<f64>,
+
+    /// Lower chances of a question being asked
+    #[arg (
+        short,
+        long,
+        num_args = 0..=1,
+        default_missing_value = DEFAULT_SOMETIMES
+    )]
+    sometimes: Option<bool>,
+
+    /// Update journal from x days ago
+    #[arg(short, long, num_args = 1)]
+    update: Option<i64>,
+}
+pub fn parse_days_before() -> i64{
+    let args = Cli::parse();
+
+    let mut days_before_today: i64 = 0;
+    match args.update {
+        Some(s) => {
+            days_before_today = s;
+
+            println!(
+                "Update entry for {}:",
+                (chrono::offset::Local::now() - chrono::Duration::days(days_before_today))
+                    .format("%d %b %Y")
+                    .to_string()
+            );
+        }
+        None => (),
+    }
+
+    days_before_today
+}
+
+pub fn parse_args(
+    question: &mut Question,
+    file: &mut std::fs::File,
+    question_chance: &mut f64,
+) -> std::io::Result<bool> {
+    let args = Cli::parse();
+
+    match args.description {
+        Some(a) => {
+            *question = "l: Add a description about the day:".to_string().into();
+
+            if a != DEFAULT_DESCRIPTION {
+                file.write_all("\n".as_bytes())?;
+                file_parsing::write_question(&file, &question)?;
+                file_parsing::write_answer(&file, &a)?;
+                return Ok(true);
+            }
+        }
+        None => (),
+    }
+    match args.note {
+        Some(a) => {
+            *question = "l: Add a note during the day:".to_string().into();
+
+            if a != DEFAULT_NOTE {
+                file.write_all("\n".as_bytes())?;
+                file_parsing::write_question(&file, &question)?;
+                file_parsing::write_answer(&file, &a)?;
+                return Ok(true);
+            }
+        }
+        None => (),
+    }
+    match args.rating {
+        Some(a) => {
+            *question = "s: Add a rating for your day out of ten:"
+                .to_string()
+                .into();
+
+            if a != DEFAULT_RATING.parse::<f64>().unwrap() {
+                file.write_all("\n".as_bytes())?;
+                file_parsing::write_question(&file, &question)?;
+                file_parsing::write_answer(&file, &a.to_string())?;
+                return Ok(true);
+            }
+        }
+        None => (),
+    }
+    args.sometimes.map(|s: bool| {
+        if s == DEFAULT_SOMETIMES.parse::<bool>().unwrap() {
+            *question_chance = QUESTION_CHANCE;
+        }
+    });
+
+    Ok(false)
+}
