@@ -8,6 +8,7 @@ const DEFAULT_DESCRIPTION: &str = "No description provided";
 const DEFAULT_NOTE: &str = "No note provided";
 const DEFAULT_RATING: &str = "1212.1212";
 const DEFAULT_SOMETIMES: &str = "true";
+const DEFAULT_ENTRIES: &str = "true";
 
 const QUESTION_CHANCE: f64 = 0.5;
 
@@ -49,10 +50,20 @@ pub struct Cli {
     )]
     sometimes: Option<bool>,
 
+    /// Show all entries into the journal
+    #[arg (
+        short,
+        long,
+        num_args = 0..=1,
+        default_missing_value = DEFAULT_ENTRIES
+    )]
+    entries: Option<bool>,
+
     /// Update journal from x days ago
     #[arg(short, long, num_args = 1)]
     update: Option<i64>,
 }
+
 pub fn parse_days_before() -> i64{
     let args = Cli::parse();
 
@@ -72,6 +83,18 @@ pub fn parse_days_before() -> i64{
     }
 
     days_before_today
+}
+
+pub fn show_entries() -> bool{
+    let args = Cli::parse();
+    let mut show_entries: bool = false;
+    args.entries.map(|e: bool| {
+        if e == DEFAULT_SOMETIMES.parse::<bool>().unwrap() {
+            show_entries = true;
+        }
+    });
+
+    show_entries
 }
 
 pub fn parse_args(

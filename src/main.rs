@@ -18,7 +18,6 @@ mod file_parsing;
 mod utility;
 mod loops;
 
-
 use home;
 use rand::Rng;
 use std::fs;
@@ -30,19 +29,18 @@ const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
 
 fn main() -> rustyline::Result<()> {
-    let days_before_today: i64 = parse_days_before();
-
     let mut jl_dir_path = home::home_dir().expect("Could not find home directory");
     jl_dir_path.push(JL_DIR_NAME);
+
+    if cli::show_entries() {
+        loops::view_files(&jl_dir_path)?;
+        return Ok(());
+    }
+    let days_before_today: i64 = parse_days_before();
 
     let today_file = utility::get_day_file_name(days_before_today);
     let today_file_path = jl_dir_path.join(&today_file);
     let questions_file_path = jl_dir_path.join(QUESTION_FILE_NAME);
-
-    ////////////////////////////////////////////////////////////////////////////////////
-    // loops::view_files(&jl_dir_path)?;
-
-    ////////////////////////////////////////////////////////////////////////////////////
 
     let mut write_question_gap = true;
 
