@@ -12,10 +12,12 @@
 //      and maybe something interactive with browsing longer notes/ a compilation of notes?
 
 mod question_structs;
-use crossterm::terminal::DisableLineWrap;
 use question_structs::{Informative, Question, QuestionType};
 mod file_parsing;
 mod utility;
+mod loops;
+
+use crossterm::terminal::DisableLineWrap;
 
 use home;
 use rand::Rng;
@@ -146,105 +148,6 @@ fn parse_args(
     Ok(false)
 }
 
-fn run_input_loop(
-    question: Question,
-    file: &mut fs::File,
-    write_question_gap: bool,
-) -> rustyline::Result<()> {
-    println!("{}", question.get_text());
-
-    let config = Config::builder().edit_mode(EditMode::Vi).build();
-    let mut rl = DefaultEditor::with_config(config)?;
-
-    let mut wrote_quesiton = false;
-
-    loop {
-        let readline = rl.readline(">> ");
-        match readline {
-            Ok(line) => {
-                if line == "".to_string() {
-                    break;
-                }
-                if !wrote_quesiton {
-                    if write_question_gap {
-                        file.write_all("\n".as_bytes())?;
-                    }
-
-                    file_parsing::write_question(&file, &question)?;
-                    wrote_quesiton = true;
-                }
-
-                file_parsing::write_answer(&file, &line)?;
-
-                if question.get_type() == QuestionType::Short {
-                    break;
-                }
-            }
-            Err(ReadlineError::Interrupted) => break,
-            Err(ReadlineError::Eof) => break,
-            Err(err) => {
-                println!("Error: {:?}", err);
-                break;
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn write_content(path: &std::path::PathBuf, mut stdout: &io::Stdout) -> rustyline::Result<()> {
-    execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
-
-    let mut line_x = 0;
-    let mut line_y = 0;
-
-    let content = fs::read_to_string(path)?;
-    let mut path_str = "";
-
-    if let Some(stem_os) = path.file_stem() {
-        if let Some(stem_str) = stem_os.to_str() {
-            path_str = stem_str;
-        }
-    }
-    queue!(
-        stdout,
-        cursor::MoveTo(line_x as u16, line_y),
-        style::PrintStyledContent(path_str.white())
-    )?;
-    line_y += 2;
-
-    let (term_width, _) = terminal::size()?;
-
-    for line in content.lines() {
-        line_x = 0;
-
-        for mut word in line.split(" ") {
-            let word_length = word.len();
-
-            if word_length > term_width as usize {
-                word = &word[..(term_width) as usize];
-            }
-
-            if word_length + line_x > term_width as usize {
-                line_y += 1;
-                line_x = 0;
-            }
-
-            queue!(
-                stdout,
-                cursor::MoveTo(line_x as u16, line_y),
-                style::PrintStyledContent(word.white())
-            )?;
-            line_x += word_length + 1;
-        }
-        line_y += 1;
-    }
-
-    std::io::stdout().flush()?;
-
-    Ok(())
-}
-
 fn main() -> rustyline::Result<()> {
     let args = Cli::parse();
 
@@ -271,68 +174,8 @@ fn main() -> rustyline::Result<()> {
     let questions_file_path = jl_dir_path.join(QUESTION_FILE_NAME);
 
     ////////////////////////////////////////////////////////////////////////////////////
-    let dir_files = fs::read_dir(jl_dir_path)?;
-    let mut journal_paths: Vec<std::path::PathBuf> = Vec::new();
-    for file in dir_files {
-        let path = file?.path();
+    loops::view_files(&jl_dir_path)?;
 
-        if let Some(stem) = path.file_stem() {
-            let string_split_stem = stem.to_string_lossy();
-            let stem_vec: Vec<&str> = string_split_stem.split("-").collect();
-            if stem_vec.len() == 3
-                && stem_vec[0].len() == 4
-                && stem_vec[1].len() == 2
-                && stem_vec[2].len() == 2
-            {
-                journal_paths.push(path);
-            }
-        }
-    }
-    journal_paths.sort();
-    let idx_max_len = journal_paths.len() - 1;
-    let mut current_idx = idx_max_len;
-    let mut state_changed = false;
-
-    let mut stdout = io::stdout();
-
-    terminal::enable_raw_mode()?;
-    execute!(stdout, terminal::EnterAlternateScreen)?;
-
-    write_content(&journal_paths[current_idx], &stdout)?;
-
-    loop {
-        if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Char('l') => {
-                    current_idx += 1;
-                    state_changed = true;
-                }
-                KeyCode::Char('h') => {
-                    if current_idx == 0 {
-                        current_idx = idx_max_len
-                    } else {
-                        current_idx -= 1;
-                    }
-                    state_changed = true;
-                }
-                KeyCode::Char('q') => break,
-                _ => {}
-            }
-        }
-
-        if state_changed {
-            state_changed = false;
-            current_idx = current_idx % (idx_max_len + 1);
-
-            write_content(&journal_paths[current_idx], &stdout)?;
-        }
-    }
-
-    execute!(stdout, terminal::LeaveAlternateScreen)?;
-    terminal::disable_raw_mode()?;
-
-    stdout.flush()?;
-    return Ok(());
     ////////////////////////////////////////////////////////////////////////////////////
 
     let mut write_question_gap = true;
@@ -374,7 +217,7 @@ fn main() -> rustyline::Result<()> {
         return Ok(());
     }
 
-    run_input_loop(question_to_ask, &mut file, write_question_gap);
+    loops::get_input(question_to_ask, &mut file, write_question_gap)?;
 
     Ok(())
 }
