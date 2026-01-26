@@ -15,7 +15,6 @@ use crossterm::{
     terminal,
 };
 
-
 pub fn get_input(
     question: Question,
     file: &mut fs::File,
@@ -82,7 +81,8 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
     }
     journal_paths.sort();
     let idx_max_len = journal_paths.len() - 1;
-    let mut current_idx = idx_max_len;
+    let mut file_index = idx_max_len;
+    let mut height_index  = 0;
     let mut state_changed = false;
 
     let mut stdout = io::stdout();
@@ -90,22 +90,32 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
     terminal::enable_raw_mode()?;
     execute!(stdout, terminal::EnterAlternateScreen)?;
 
-    utility::write_content(&journal_paths[current_idx], &stdout)?;
+    utility::write_display_content(&journal_paths[file_index], height_index, &stdout)?;
 
     loop {
         if let Event::Key(key) = event::read()? {
             match key.code {
                 KeyCode::Char('l') => {
-                    current_idx += 1;
+                    file_index += 1;
                     state_changed = true;
                 }
                 KeyCode::Char('h') => {
-                    if current_idx == 0 {
-                        current_idx = idx_max_len
+                    if file_index == 0 {
+                        file_index = idx_max_len
                     } else {
-                        current_idx -= 1;
+                        file_index -= 1;
                     }
                     state_changed = true;
+                }
+                KeyCode::Char('j') => {
+                    height_index += 1;
+                    state_changed = true;
+                }
+                KeyCode::Char('k') => {
+                    if height_index != 0 {
+                        height_index -= 1;
+                        state_changed = true;
+                    }
                 }
                 KeyCode::Char('q') => break,
                 _ => {}
@@ -114,9 +124,9 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
 
         if state_changed {
             state_changed = false;
-            current_idx = current_idx % (idx_max_len + 1);
+            file_index = file_index % (idx_max_len + 1);
 
-            utility::write_content(&journal_paths[current_idx], &stdout)?;
+            utility::write_display_content(&journal_paths[file_index], height_index, &stdout)?;
         }
     }
 
