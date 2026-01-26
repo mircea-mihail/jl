@@ -2,8 +2,7 @@ use std::fs;
 use std::io::Write;
 
 use crossterm::{
-    cursor,
-    execute, queue,
+    cursor, execute, queue,
     style::{self, Stylize},
     terminal,
 };
@@ -14,7 +13,11 @@ pub fn get_day_file_name(days_before: i64) -> String {
         .to_string()
 }
 
-pub fn write_display_content(path: &std::path::PathBuf, height_index: usize , mut stdout: &std::io::Stdout) -> std::io::Result<()> {
+pub fn write_display_content(
+    path: &std::path::PathBuf,
+    height_index: usize,
+    mut stdout: &std::io::Stdout,
+) -> std::io::Result<()> {
     execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
 
     let mut line_x = 0;
@@ -64,14 +67,15 @@ pub fn write_display_content(path: &std::path::PathBuf, height_index: usize , mu
         }
         terminal_lines.push(terminal_line.clone());
         terminal_line = "".to_string();
-
     }
     let init_line_y = 2;
     line_y = init_line_y;
 
     let mut line_idx = 0;
     for line in terminal_lines {
-        if line_idx > height_index && line_idx < height_index + term_height as usize - init_line_y as usize + 1 {
+        if line_idx > height_index
+            && line_idx < height_index + term_height as usize - init_line_y as usize + 1
+        {
             queue!(
                 stdout,
                 cursor::MoveTo(0 as u16, line_y),
