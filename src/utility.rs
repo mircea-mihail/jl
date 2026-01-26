@@ -66,11 +66,12 @@ pub fn write_display_content(path: &std::path::PathBuf, height_index: usize , mu
         terminal_line = "".to_string();
 
     }
-    line_y = 2;
+    let init_line_y = 2;
+    line_y = init_line_y;
 
     let mut line_idx = 0;
     for line in terminal_lines {
-        if line_idx > height_index && line_idx <= height_index + term_height as usize {
+        if line_idx > height_index && line_idx < height_index + term_height as usize - init_line_y as usize + 1 {
             queue!(
                 stdout,
                 cursor::MoveTo(0 as u16, line_y),
