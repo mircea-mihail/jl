@@ -1,4 +1,3 @@
-use std::fs;
 use std::io::Write;
 
 use crossterm::{
@@ -13,34 +12,12 @@ pub fn get_day_file_name(days_before: i64) -> String {
         .to_string()
 }
 
-pub fn write_display_content(
-    path: &std::path::PathBuf,
-    height_index: usize,
-    mut stdout: &std::io::Stdout,
-) -> std::io::Result<()> {
-    execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
-
-    let mut line_x = 0;
-    let mut line_y = 0;
-
-    let content = fs::read_to_string(path)?;
-    let mut path_str = "";
-
-    if let Some(stem_os) = path.file_stem() {
-        if let Some(stem_str) = stem_os.to_str() {
-            path_str = stem_str;
-        }
-    }
-    queue!(
-        stdout,
-        cursor::MoveTo(line_x as u16, line_y),
-        style::PrintStyledContent(path_str.white())
-    )?;
-
-    let (term_width, term_height) = terminal::size()?;
+pub fn parse_display_text(content: String) -> std::io::Result<Vec<String>>{
+    let (term_width, _) = terminal::size()?;
 
     let mut terminal_lines: Vec<String> = Vec::new();
     let mut terminal_line: String = "".to_string();
+    let mut line_x;
 
     for line in content.lines() {
         line_x = 0;
@@ -68,6 +45,35 @@ pub fn write_display_content(
         terminal_lines.push(terminal_line.clone());
         terminal_line = "".to_string();
     }
+ 
+    Ok(terminal_lines)
+}
+
+pub fn write_display_content(
+    path: &std::path::PathBuf,
+    height_index: usize,
+    terminal_lines: Vec<String>,
+    mut stdout: &std::io::Stdout,
+) -> std::io::Result<()> {
+    execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
+
+    let (_ , term_height) = terminal::size()?;
+
+    let mut line_y = 0;
+
+    let mut path_str = "";
+
+    if let Some(stem_os) = path.file_stem() {
+        if let Some(stem_str) = stem_os.to_str() {
+            path_str = stem_str;
+        }
+    }
+    queue!(
+        stdout,
+        cursor::MoveTo(0 as u16, line_y),
+        style::PrintStyledContent(path_str.white())
+    )?;
+
     let init_line_y = 2;
     line_y = init_line_y;
 

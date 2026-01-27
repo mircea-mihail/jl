@@ -1,6 +1,6 @@
 use crate::question_structs::{Informative, Question, QuestionType};
 use crate::file_parsing;
-use crate::utility;
+use crate::utility::{self, parse_display_text};
 
 use std::io::{self, Write};
 
@@ -90,7 +90,9 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
     terminal::enable_raw_mode()?;
     execute!(stdout, terminal::EnterAlternateScreen)?;
 
-    utility::write_display_content(&journal_paths[file_index], height_index, &stdout)?;
+    let file_content = fs::read_to_string(&journal_paths[file_index])?;
+    let mut terminal_lines = parse_display_text(file_content)?;
+    utility::write_display_content(&journal_paths[file_index], height_index, terminal_lines, &stdout)?;
 
     loop {
         if let Event::Key(key) = event::read()? {
@@ -126,7 +128,10 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
             state_changed = false;
             file_index = file_index % (idx_max_len + 1);
 
-            utility::write_display_content(&journal_paths[file_index], height_index, &stdout)?;
+            let file_content = fs::read_to_string(&journal_paths[file_index])?;
+            terminal_lines = parse_display_text(file_content)?;
+
+            utility::write_display_content(&journal_paths[file_index], height_index, terminal_lines, &stdout)?;
         }
     }
 
