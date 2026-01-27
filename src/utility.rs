@@ -30,7 +30,7 @@ pub fn parse_display_text(content: String) -> std::io::Result<Vec<String>>{
                 word_length = word.len();
             }
 
-            if word_length + line_x > term_width as usize {
+            if word_length + line_x + 1> term_width as usize {
                 terminal_lines.push(terminal_line.clone());
                 terminal_line = "".to_string();
 
@@ -46,6 +46,7 @@ pub fn parse_display_text(content: String) -> std::io::Result<Vec<String>>{
         terminal_line = "".to_string();
     }
  
+    terminal_lines.push(terminal_line.clone());
     Ok(terminal_lines)
 }
 
