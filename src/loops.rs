@@ -112,8 +112,11 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
                     file_changed = true;
                 }
                 KeyCode::Char('j') => {
-                    height_index += 1;
-                    height_changed = true;
+                    let (_ , term_height) = terminal::size()?;
+                    if terminal_lines.len() - height_index > term_height as usize {
+                        height_index += 1;
+                        height_changed = true;
+                    }
                 }
                 KeyCode::Char('k') => {
                     if height_index != 0 {
@@ -126,12 +129,14 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
             }
         }
         if height_changed {
-
+            height_changed = false;
             utility::write_display_content(&journal_paths[file_index], height_index, &terminal_lines, &stdout)?;
         }
 
         if file_changed {
+            file_changed = false;
             file_index = file_index % (idx_max_len + 1);
+            height_index = 0;
             file_content = fs::read_to_string(&journal_paths[file_index])?;
             terminal_lines = parse_display_text(file_content)?;
             utility::write_display_content(&journal_paths[file_index], height_index, &terminal_lines, &stdout)?;
