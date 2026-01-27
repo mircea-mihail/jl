@@ -52,7 +52,7 @@ pub fn parse_display_text(content: String) -> std::io::Result<Vec<String>>{
 pub fn write_display_content(
     path: &std::path::PathBuf,
     height_index: usize,
-    terminal_lines: Vec<String>,
+    terminal_lines: &Vec<String>,
     mut stdout: &std::io::Stdout,
 ) -> std::io::Result<()> {
     execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
@@ -85,7 +85,7 @@ pub fn write_display_content(
             queue!(
                 stdout,
                 cursor::MoveTo(0 as u16, line_y),
-                style::PrintStyledContent(line.white())
+                style::PrintStyledContent(line.clone().white())
             )?;
             line_y += 1;
         }

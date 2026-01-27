@@ -83,23 +83,25 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
     let idx_max_len = journal_paths.len() - 1;
     let mut file_index = idx_max_len;
     let mut height_index  = 0;
-    let mut state_changed = false;
+
+    let mut height_changed = false;
+    let mut file_changed = false;
 
     let mut stdout = io::stdout();
 
     terminal::enable_raw_mode()?;
     execute!(stdout, terminal::EnterAlternateScreen)?;
 
-    let file_content = fs::read_to_string(&journal_paths[file_index])?;
+    let mut file_content = fs::read_to_string(&journal_paths[file_index])?;
     let mut terminal_lines = parse_display_text(file_content)?;
-    utility::write_display_content(&journal_paths[file_index], height_index, terminal_lines, &stdout)?;
+    utility::write_display_content(&journal_paths[file_index], height_index, &terminal_lines, &stdout)?;
 
     loop {
         if let Event::Key(key) = event::read()? {
             match key.code {
                 KeyCode::Char('l') => {
                     file_index += 1;
-                    state_changed = true;
+                    file_changed = true;
                 }
                 KeyCode::Char('h') => {
                     if file_index == 0 {
@@ -107,32 +109,34 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
                     } else {
                         file_index -= 1;
                     }
-                    state_changed = true;
+                    file_changed = true;
                 }
                 KeyCode::Char('j') => {
                     height_index += 1;
-                    state_changed = true;
+                    height_changed = true;
                 }
                 KeyCode::Char('k') => {
                     if height_index != 0 {
                         height_index -= 1;
-                        state_changed = true;
+                        height_changed = true;
                     }
                 }
                 KeyCode::Char('q') => break,
                 _ => {}
             }
         }
+        if height_changed {
 
-        if state_changed {
-            state_changed = false;
-            file_index = file_index % (idx_max_len + 1);
-
-            let file_content = fs::read_to_string(&journal_paths[file_index])?;
-            terminal_lines = parse_display_text(file_content)?;
-
-            utility::write_display_content(&journal_paths[file_index], height_index, terminal_lines, &stdout)?;
+            utility::write_display_content(&journal_paths[file_index], height_index, &terminal_lines, &stdout)?;
         }
+
+        if file_changed {
+            file_index = file_index % (idx_max_len + 1);
+            file_content = fs::read_to_string(&journal_paths[file_index])?;
+            terminal_lines = parse_display_text(file_content)?;
+            utility::write_display_content(&journal_paths[file_index], height_index, &terminal_lines, &stdout)?;
+        }
+
     }
 
     execute!(stdout, terminal::LeaveAlternateScreen)?;
