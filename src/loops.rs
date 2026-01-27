@@ -1,5 +1,5 @@
-use crate::question_structs::{Informative, Question, QuestionType};
 use crate::file_parsing;
+use crate::question_structs::{Informative, Question, QuestionType};
 use crate::utility::{self, parse_display_text};
 
 use std::io::{self, Write};
@@ -11,8 +11,7 @@ use rustyline::{Config, DefaultEditor, EditMode};
 
 use crossterm::{
     event::{self, Event, KeyCode},
-    execute,
-    terminal,
+    execute, terminal,
 };
 
 pub fn get_input(
@@ -61,7 +60,7 @@ pub fn get_input(
     Ok(())
 }
 
-pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
+pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
     let dir_files = fs::read_dir(jl_dir_path)?;
     let mut journal_paths: Vec<std::path::PathBuf> = Vec::new();
     for file in dir_files {
@@ -82,7 +81,7 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
     journal_paths.sort();
     let idx_max_len = journal_paths.len() - 1;
     let mut file_index = idx_max_len;
-    let mut height_index  = 0;
+    let mut height_index = 0;
 
     let mut height_changed = false;
     let mut file_changed = false;
@@ -94,7 +93,12 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
 
     let mut file_content = fs::read_to_string(&journal_paths[file_index])?;
     let mut terminal_lines = parse_display_text(file_content)?;
-    utility::write_display_content(&journal_paths[file_index], height_index, &terminal_lines, &stdout)?;
+    utility::write_display_content(
+        &journal_paths[file_index],
+        height_index,
+        &terminal_lines,
+        &stdout,
+    )?;
 
     loop {
         if let Event::Key(key) = event::read()? {
@@ -112,7 +116,7 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
                     file_changed = true;
                 }
                 KeyCode::Char('j') => {
-                    let (_ , term_height) = terminal::size()?;
+                    let (_, term_height) = terminal::size()?;
                     if terminal_lines.len() - height_index > term_height as usize {
                         height_index += 1;
                         height_changed = true;
@@ -130,7 +134,12 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
         }
         if height_changed {
             height_changed = false;
-            utility::write_display_content(&journal_paths[file_index], height_index, &terminal_lines, &stdout)?;
+            utility::write_display_content(
+                &journal_paths[file_index],
+                height_index,
+                &terminal_lines,
+                &stdout,
+            )?;
         }
 
         if file_changed {
@@ -139,9 +148,13 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf ) -> io::Result<()> {
             height_index = 0;
             file_content = fs::read_to_string(&journal_paths[file_index])?;
             terminal_lines = parse_display_text(file_content)?;
-            utility::write_display_content(&journal_paths[file_index], height_index, &terminal_lines, &stdout)?;
+            utility::write_display_content(
+                &journal_paths[file_index],
+                height_index,
+                &terminal_lines,
+                &stdout,
+            )?;
         }
-
     }
 
     execute!(stdout, terminal::LeaveAlternateScreen)?;
