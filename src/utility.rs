@@ -12,7 +12,7 @@ pub fn get_day_file_name(days_before: i64) -> String {
         .to_string()
 }
 
-pub fn parse_display_text(content: String) -> std::io::Result<Vec<String>>{
+pub fn parse_display_text(content: &String) -> std::io::Result<Vec<String>>{
     let (term_width, _) = terminal::size()?;
 
     let mut terminal_lines: Vec<String> = Vec::new();
