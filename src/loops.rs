@@ -1,6 +1,5 @@
 use crate::file_parsing;
 use crate::question_structs::{Informative, Question, QuestionType};
-use crate::utility::{self};
 use crate::pager;
 
 use std::io::{self, Write};
