@@ -17,6 +17,7 @@ use question_structs::{Question};
 mod file_parsing;
 mod utility;
 mod loops;
+mod pager;
 
 use home;
 use rand::Rng;

@@ -1,6 +1,7 @@
 use crate::file_parsing;
 use crate::question_structs::{Informative, Question, QuestionType};
-use crate::utility::{self, parse_display_text};
+use crate::utility::{self};
+use crate::pager;
 
 use std::io::{self, Write};
 
@@ -92,8 +93,8 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
     execute!(stdout, terminal::EnterAlternateScreen)?;
 
     let mut file_content = fs::read_to_string(&journal_paths[file_index])?;
-    let mut terminal_lines = parse_display_text(&file_content)?;
-    utility::write_display_content(
+    let mut terminal_lines = pager::parse_display_text(&file_content)?;
+    pager::write_display_content(
         &journal_paths[file_index],
         height_index,
         &terminal_lines,
@@ -103,8 +104,8 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
     loop {
         let event = event::read()?;
         if let Event::Resize(_, _)  = event {
-            terminal_lines = parse_display_text(&file_content)?;
-            utility::write_display_content(
+            terminal_lines = pager::parse_display_text(&file_content)?;
+            pager::write_display_content(
                 &journal_paths[file_index],
                 height_index,
                 &terminal_lines,
@@ -145,7 +146,7 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
         }
         if height_changed {
             height_changed = false;
-            utility::write_display_content(
+            pager::write_display_content(
                 &journal_paths[file_index],
                 height_index,
                 &terminal_lines,
@@ -158,8 +159,8 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
             file_index = file_index % (idx_max_len + 1);
             height_index = 0;
             file_content = fs::read_to_string(&journal_paths[file_index])?;
-            terminal_lines = parse_display_text(&file_content)?;
-            utility::write_display_content(
+            terminal_lines = pager::parse_display_text(&file_content)?;
+            pager::write_display_content(
                 &journal_paths[file_index],
                 height_index,
                 &terminal_lines,

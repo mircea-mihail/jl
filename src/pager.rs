@@ -1,0 +1,93 @@
+use std::io::Write;
+
+use crossterm::{
+    cursor, execute, queue,
+    style::{self, Stylize},
+    terminal,
+};
+
+pub fn parse_display_text(content: &String) -> std::io::Result<Vec<String>>{
+    let (term_width, _) = terminal::size()?;
+
+    let mut terminal_lines: Vec<String> = Vec::new();
+    let mut terminal_line: String = "".to_string();
+    let mut line_x;
+
+    for line in content.lines() {
+        line_x = 0;
+
+        for mut word in line.split(" ") {
+            let mut word_length = word.len();
+
+            if word_length > term_width as usize {
+                word = &word[..(term_width) as usize];
+                word_length = word.len();
+            }
+
+            if word_length + line_x + 1 > term_width as usize {
+                terminal_lines.push(terminal_line.clone());
+                terminal_line = "".to_string();
+
+                line_x = 0;
+            }
+
+            terminal_line += word;
+            terminal_line += " ";
+
+            line_x += word_length + 1;
+        }
+        terminal_lines.push(terminal_line.clone());
+        terminal_line = "".to_string();
+    }
+ 
+    terminal_lines.push(terminal_line.clone());
+    Ok(terminal_lines)
+}
+
+pub fn write_display_content(
+    path: &std::path::PathBuf,
+    height_index: usize,
+    terminal_lines: &Vec<String>,
+    mut stdout: &std::io::Stdout,
+) -> std::io::Result<()> {
+    execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
+
+    let (_ , term_height) = terminal::size()?;
+
+    let mut line_y = 0;
+
+    let mut path_str = "";
+
+    if let Some(stem_os) = path.file_stem() {
+        if let Some(stem_str) = stem_os.to_str() {
+            path_str = stem_str;
+        }
+    }
+    queue!(
+        stdout,
+        cursor::MoveTo(0 as u16, line_y),
+        style::PrintStyledContent(path_str.white())
+    )?;
+
+    let init_line_y = 2;
+    line_y = init_line_y;
+
+    let mut line_idx = 0;
+    for line in terminal_lines {
+        if line_idx > height_index
+            && line_idx < height_index + term_height as usize - init_line_y as usize + 1
+        {
+            queue!(
+                stdout,
+                cursor::MoveTo(0 as u16, line_y),
+                style::PrintStyledContent(line.clone().white())
+            )?;
+            line_y += 1;
+        }
+        line_idx += 1;
+    }
+
+    std::io::stdout().flush()?;
+
+    Ok(())
+}
