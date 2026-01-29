@@ -1,7 +1,11 @@
+// implement informative for question chunk
+// do pager
+
 use std::fmt;
 use crate::cli;
 
 const QUESTION_TYPE_TRAIL: &str = ": ";
+const QUESTION_TYPE_ERROR: &str = "question chunk does not fit the format";
 
 #[derive(PartialEq)]
 pub enum QuestionType {
@@ -136,37 +140,42 @@ impl Informative for Question {
 impl ChunkParser for QuestionChunk {
     fn get_informative(&self) -> std::io::Result<Question> {
         let question_lines: Vec<&str> = self.question_chunk.lines().collect();
-        if question_lines.len() == 3 {
+        if question_lines.len() >= 3 {
             return Ok(question_lines[0].to_string().into());
         }
 
         Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
-            "question chunk does not fit the format",
+            QUESTION_TYPE_ERROR,
         )) 
     }
 
     fn get_question(&self) -> std::io::Result<Question> {
         let question_lines: Vec<&str> = self.question_chunk.lines().collect();
-        if question_lines.len() == 3 {
-            return Ok(question_lines[0].to_string().into());
+        if question_lines.len() >= 3 {
+            return Ok(question_lines[1].to_string().into());
         }
 
         Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
-            "question chunk does not fit the format",
+            QUESTION_TYPE_ERROR,
         )) 
     }
 
     fn get_answer(&self) -> std::io::Result<Question> {
         let question_lines: Vec<&str> = self.question_chunk.lines().collect();
-        if question_lines.len() == 3 {
-            return Ok(question_lines[0].to_string().into());
+        let mut answer = "".to_string();
+        if question_lines.len() >= 3 {
+            for line in &question_lines {
+                answer += line;
+            }
+
+            return Ok(answer.into());
         }
 
         Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
-            "question chunk does not fit the format",
+            QUESTION_TYPE_ERROR,
         )) 
     }
 }
