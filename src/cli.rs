@@ -4,6 +4,10 @@ use crate::question_structs::{Question};
 use clap::Parser;
 use std::io::{Write};
 
+pub const DESCRIPTION_QUESTION_STR: &str = "l: Add a description about the day:";
+pub const NOTE_QUESTION_STR: &str = "l: Add a note during the day:";
+pub const RATING_QUESTION_STR: &str = "s: Add a rating for your day out of ten:";
+
 const DEFAULT_DESCRIPTION: &str = "No description provided";
 const DEFAULT_NOTE: &str = "No note provided";
 const DEFAULT_RATING: &str = "1212.1212";
@@ -106,7 +110,7 @@ pub fn parse_args(
 
     match args.description {
         Some(a) => {
-            *question = "l: Add a description about the day:".to_string().into();
+            *question = DESCRIPTION_QUESTION_STR.to_string().into();
 
             if a != DEFAULT_DESCRIPTION {
                 file.write_all("\n".as_bytes())?;
@@ -119,7 +123,7 @@ pub fn parse_args(
     }
     match args.note {
         Some(a) => {
-            *question = "l: Add a note during the day:".to_string().into();
+            *question = NOTE_QUESTION_STR.to_string().into();
 
             if a != DEFAULT_NOTE {
                 file.write_all("\n".as_bytes())?;
@@ -132,7 +136,7 @@ pub fn parse_args(
     }
     match args.rating {
         Some(a) => {
-            *question = "s: Add a rating for your day out of ten:"
+            *question = RATING_QUESTION_STR
                 .to_string()
                 .into();
 
