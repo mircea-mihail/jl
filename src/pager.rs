@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::Write, thread::current};
 
 use crossterm::{
     cursor, execute, queue,
@@ -6,7 +6,29 @@ use crossterm::{
     terminal,
 };
 
+use crate::question_structs::{ChunkParser, Informative, LongQuesitonType, Question, QuestionChunk, QuestionType};
+
+fn format_content(content: String) -> std::io::Result<String>{
+    let mut chunk_vec: Vec<QuestionChunk> = Vec::new();
+    let mut notes: Vec<QuestionChunk> = Vec::new();
+    let mut descriptions: Vec<QuestionChunk> = Vec::new();
+    let mut ratings: Vec<QuestionChunk> = Vec::new();
+    let mut current_chunk: String = "".to_string(); 
+
+    for line in content.lines() {
+        if line == "" {
+
+            current_chunk = "".to_string();
+        }
+        current_chunk += line;
+    }
+
+    todo!()
+}
+
 pub fn parse_display_text(content: &String) -> std::io::Result<Vec<String>>{
+
+
     let (term_width, _) = terminal::size()?;
 
     let mut terminal_lines: Vec<String> = Vec::new();
