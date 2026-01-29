@@ -1,4 +1,5 @@
 use std::fmt;
+use crate::cli;
 
 const QUESTION_TYPE_TRAIL: &str = ": ";
 
@@ -6,10 +7,16 @@ const QUESTION_TYPE_TRAIL: &str = ": ";
 pub enum QuestionType {
     Short,
     Long,
-    Prompt,
     Answer,
     Info,
     Empty,
+}
+
+pub enum LongQuesitonType {
+    Regular,
+    Description,
+    Note,
+    Rating,
 }
 
 #[derive(PartialEq, Default, Clone, Debug)]
@@ -19,12 +26,6 @@ pub struct Question {
 
 pub struct QuestionChunk {
     pub question_chunk: String,
-}
-
-pub trait ChunkParser {
-    fn get_informative(&self) -> std::io::Result<Question>;
-    fn get_question(&self) -> std::io::Result<Question>;
-    fn get_answer(&self) -> std::io::Result<Question>;
 }
 
 impl From<String> for Question {
@@ -39,11 +40,25 @@ impl fmt::Display for Question {
     }
 }
 
+impl From<String> for QuestionChunk {
+    fn from(s: String) -> Self {
+        QuestionChunk { question_chunk: s }
+    }
+}
+
 pub trait Informative {
     fn is_question(&self) -> bool;
     fn get_type(&self) -> QuestionType;
     fn get_type_as_str(&self) -> &str;
+    fn get_long_type(&self) -> std::io::Result<LongQuesitonType>;
     fn get_text(&self) -> String;
+
+}
+
+pub trait ChunkParser {
+    fn get_informative(&self) -> std::io::Result<Question>;
+    fn get_question(&self) -> std::io::Result<Question>;
+    fn get_answer(&self) -> std::io::Result<Question>;
 }
 
 impl Informative for Question {
@@ -62,10 +77,6 @@ impl Informative for Question {
 
         if follow_up_chars != QUESTION_TYPE_TRAIL {
             return QuestionType::Empty;
-        }
-
-        if question_type == "l" && self.question.get(self.question.len()-1..).unwrap_or("") == ":" {
-            return QuestionType::Prompt;
         }
 
         match question_type {
@@ -88,6 +99,29 @@ impl Informative for Question {
         question_type
     }
 
+    fn get_long_type(&self) -> std::io::Result<LongQuesitonType> {
+        if self.get_type() != QuestionType::Long {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "cannot get long type on questions that are not of type long",
+                )) 
+        }
+
+        let question_string = self.get_text();
+
+        if question_string == cli::DESCRIPTION_QUESTION_STR {
+            return Ok(LongQuesitonType::Description);
+        }
+        if question_string == cli::NOTE_QUESTION_STR {
+            return Ok(LongQuesitonType::Note);
+        }
+        if question_string == cli::RATING_QUESTION_STR {
+            return Ok(LongQuesitonType::Rating);
+        }
+
+        return Ok(LongQuesitonType::Regular);
+    }
+
     fn get_text(&self) -> String {
         if self.get_type() == QuestionType::Empty {
             return "".to_string();
@@ -96,6 +130,7 @@ impl Informative for Question {
         let text = self.question.get(3..).unwrap_or("");
         text.to_string()
     }
+
 }
 
 impl ChunkParser for QuestionChunk {
