@@ -16,6 +16,7 @@ pub enum QuestionType {
     Empty,
 }
 
+#[derive(PartialEq)]
 pub enum LongQuesitonType {
     Regular,
     Description,
@@ -44,16 +45,29 @@ impl fmt::Display for Question {
     }
 }
 
+impl From<&str> for Question {
+    fn from(s: &str) -> Self {
+        Question { question: s.to_string() }
+    }
+}
+
 impl From<String> for QuestionChunk {
     fn from(s: String) -> Self {
         QuestionChunk { question_chunk: s }
     }
 }
 
+impl From<&str> for QuestionChunk {
+    fn from(s: &str) -> Self {
+        QuestionChunk { question_chunk: s.to_string() }
+    }
+}
+
+
 pub trait Informative {
     fn is_question(&self) -> std::io::Result<bool>;
     fn get_type(&self) -> std::io::Result<QuestionType>;
-    fn get_type_as_str(&self) -> std::io::Result<&str>;
+    fn get_type_as_str(&self) -> std::io::Result<String>;
     fn get_long_type(&self) -> std::io::Result<LongQuesitonType>;
     fn get_text(&self) -> std::io::Result<String>;
 
@@ -62,20 +76,30 @@ pub trait Informative {
 pub trait ChunkParser {
     fn get_informative(&self) -> std::io::Result<Question>;
     fn get_question(&self) -> std::io::Result<Question>;
-    fn get_answer(&self) -> std::io::Result<Question>;
+    fn get_answer(&self) -> std::io::Result<Vec<Question>>;
 }
 
-// impl Informative for QuestionChunk {
-//     fn is_question(&self) -> std::io::Result<bool> {
-//         let question_type = self.get_type();
+impl Informative for QuestionChunk {
+    fn is_question(&self) -> std::io::Result<bool> {
+        self.get_question()?.is_question()
+    }
 
-//         false
-//     }
+    fn get_type(&self) -> std::io::Result<QuestionType> {
+        self.get_question()?.get_type()
+    }
 
-//     fn get_type(&self) -> std::io::Result<QuestionType> {
-//         self.get_question()?.get_type()
-//     }
-// }
+    fn get_type_as_str(&self) -> std::io::Result<String> {
+        self.get_question()?.get_type_as_str()
+    }
+
+    fn get_long_type(&self) -> std::io::Result<LongQuesitonType> {
+        self.get_question()?.get_long_type()
+    }
+
+    fn get_text(&self) -> std::io::Result<String> {
+        Ok(self.question_chunk.clone())
+    }
+}
 
 impl Informative for Question {
     fn is_question(&self) -> std::io::Result<bool> {
@@ -104,15 +128,15 @@ impl Informative for Question {
         }
     }
 
-    fn get_type_as_str(&self) -> std::io::Result<&str> {
+    fn get_type_as_str(&self) -> std::io::Result<String> {
         let question_type = self.question.get(..1).unwrap_or("");
         let follow_up_chars = self.question.get(1..3).unwrap_or("");
 
         if follow_up_chars != QUESTION_TYPE_TRAIL {
-            return Ok("");
+            return Ok("".to_string());
         }
 
-        Ok(question_type)
+        Ok(question_type.to_string())
     }
 
     fn get_long_type(&self) -> std::io::Result<LongQuesitonType> {
@@ -122,8 +146,7 @@ impl Informative for Question {
                 "cannot get long type on questions that are not of type long",
                 )) 
         }
-
-        let question_string = self.get_text()?;
+        let question_string = &self.question;
 
         if question_string == cli::DESCRIPTION_QUESTION_STR {
             return Ok(LongQuesitonType::Description);
@@ -174,20 +197,16 @@ impl ChunkParser for QuestionChunk {
         )) 
     }
 
-    fn get_answer(&self) -> std::io::Result<Question> {
-        let question_lines: Vec<&str> = self.question_chunk.lines().collect();
-        let mut answer = "".to_string();
-        if question_lines.len() >= 3 {
-            for line in &question_lines {
-                answer += line;
-            }
+    fn get_answer(&self) -> std::io::Result<Vec<Question>> {
+        let all_lines: Vec<&str> = self.question_chunk.lines().skip(2).collect();
 
-            return Ok(answer.into());
+        if all_lines.is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                QUESTION_TYPE_ERROR,
+            ));
         }
 
-        Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            QUESTION_TYPE_ERROR,
-        )) 
+        Ok(all_lines.into_iter().map(Question::from).collect())
     }
 }
