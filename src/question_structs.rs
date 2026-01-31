@@ -51,11 +51,11 @@ impl From<String> for QuestionChunk {
 }
 
 pub trait Informative {
-    fn is_question(&self) -> bool;
-    fn get_type(&self) -> QuestionType;
-    fn get_type_as_str(&self) -> &str;
+    fn is_question(&self) -> std::io::Result<bool>;
+    fn get_type(&self) -> std::io::Result<QuestionType>;
+    fn get_type_as_str(&self) -> std::io::Result<&str>;
     fn get_long_type(&self) -> std::io::Result<LongQuesitonType>;
-    fn get_text(&self) -> String;
+    fn get_text(&self) -> std::io::Result<String>;
 
 }
 
@@ -65,53 +65,65 @@ pub trait ChunkParser {
     fn get_answer(&self) -> std::io::Result<Question>;
 }
 
+// impl Informative for QuestionChunk {
+//     fn is_question(&self) -> std::io::Result<bool> {
+//         let question_type = self.get_type();
+
+//         false
+//     }
+
+//     fn get_type(&self) -> std::io::Result<QuestionType> {
+//         self.get_question()?.get_type()
+//     }
+// }
+
 impl Informative for Question {
-    fn is_question(&self) -> bool {
-        let question_type = self.get_type();
+    fn is_question(&self) -> std::io::Result<bool> {
+        let question_type = self.get_type()?;
         if question_type != QuestionType::Empty {
-            return true;
+            return Ok(true);
         }
 
-        false
+        Ok(false)
     }
 
-    fn get_type(&self) -> QuestionType {
+    fn get_type(&self) -> std::io::Result<QuestionType> {
         let question_type = self.question.get(..1).unwrap_or("");
         let follow_up_chars = self.question.get(1..3).unwrap_or("");
 
         if follow_up_chars != QUESTION_TYPE_TRAIL {
-            return QuestionType::Empty;
+            return Ok(QuestionType::Empty);
         }
 
         match question_type {
-            "l" => QuestionType::Long,
-            "s" => QuestionType::Short,
-            "a" => QuestionType::Answer,
-            "i" => QuestionType::Info,
-            _ => QuestionType::Empty,
+            "l" => Ok(QuestionType::Long),
+            "s" => Ok(QuestionType::Short),
+            "a" => Ok(QuestionType::Answer),
+            "i" => Ok(QuestionType::Info),
+            _ => Ok(QuestionType::Empty),
         }
     }
 
-    fn get_type_as_str(&self) -> &str {
+    fn get_type_as_str(&self) -> std::io::Result<&str> {
         let question_type = self.question.get(..1).unwrap_or("");
         let follow_up_chars = self.question.get(1..3).unwrap_or("");
 
         if follow_up_chars != QUESTION_TYPE_TRAIL {
-            return "";
+            return Ok("");
         }
 
-        question_type
+        Ok(question_type)
     }
 
     fn get_long_type(&self) -> std::io::Result<LongQuesitonType> {
-        if self.get_type() != QuestionType::Long {
+        if self.get_type()? != QuestionType::Long {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 "cannot get long type on questions that are not of type long",
                 )) 
         }
 
-        let question_string = self.get_text();
+        let question_string = self.get_text()?;
 
         if question_string == cli::DESCRIPTION_QUESTION_STR {
             return Ok(LongQuesitonType::Description);
@@ -126,13 +138,13 @@ impl Informative for Question {
         return Ok(LongQuesitonType::Regular);
     }
 
-    fn get_text(&self) -> String {
-        if self.get_type() == QuestionType::Empty {
-            return "".to_string();
+    fn get_text(&self) -> std::io::Result<String> {
+        if self.get_type()? == QuestionType::Empty {
+            return Ok("".to_string());
         }
 
         let text = self.question.get(3..).unwrap_or("");
-        text.to_string()
+        Ok(text.to_string())
     }
 
 }

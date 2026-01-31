@@ -19,7 +19,7 @@ pub fn get_input(
     file: &mut fs::File,
     write_question_gap: bool,
 ) -> rustyline::Result<()> {
-    println!("{}", question.get_text());
+    println!("{}", question.get_text()?);
 
     let config = Config::builder().edit_mode(EditMode::Vi).build();
     let mut rl = DefaultEditor::with_config(config)?;
@@ -44,7 +44,7 @@ pub fn get_input(
 
                 file_parsing::write_answer(&file, &line)?;
 
-                if question.get_type() == QuestionType::Short {
+                if question.get_type()? == QuestionType::Short {
                     break;
                 }
             }

@@ -19,7 +19,7 @@ fn generate_jumbled_questions_file(questions_path: &Path, jumbled_questions_path
     let mut rng = rand::rng();
 
     for question in questions_text.split("\n").map(|a| <Question as From<_>>::from(a.to_string())) {
-        if question.is_question() {
+        if question.is_question()? {
             questions.push(question);
         }
     }
@@ -118,9 +118,9 @@ pub fn write_question(mut file: &fs::File, question: &Question) -> io::Result<()
     )?;
 
     // write the actual question
-    file.write_all(question.get_type_as_str().as_bytes())?;
+    file.write_all(question.get_type_as_str()?.as_bytes())?;
     file.write_all(": ".as_bytes())?;
-    file.write_all(question.get_text().as_bytes())?;
+    file.write_all(question.get_text()?.as_bytes())?;
     file.write_all("\n".as_bytes())?;
 
     Ok(())
