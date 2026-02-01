@@ -1,4 +1,4 @@
-use std::{io::Write, thread::current};
+use std::{io::Write};
 
 use crossterm::{
     cursor, execute, queue,
@@ -6,29 +6,52 @@ use crossterm::{
     terminal,
 };
 
-use crate::question_structs::{ChunkParser, Informative, LongQuesitonType, Question, QuestionChunk, QuestionType};
+use crate::question_structs::{
+    ChunkParser, Informative, LongQuesitonType, Question, QuestionChunk, QuestionType,
+};
 
-fn format_content(content: String) -> std::io::Result<String>{
-    let mut chunk_vec: Vec<QuestionChunk> = Vec::new();
-    let mut notes: Vec<QuestionChunk> = Vec::new();
-    let mut descriptions: Vec<QuestionChunk> = Vec::new();
-    let mut ratings: Vec<QuestionChunk> = Vec::new();
-    let mut current_chunk: String = "".to_string(); 
+pub fn format_content(content: &String) -> std::io::Result<String> {
+    eprintln!("trying to format content..");
+    // let mut chunk_vec: Vec<QuestionChunk> = Vec::new();
+    // let mut notes: Vec<QuestionChunk> = Vec::new();
+    let mut descriptions: Vec<Question> = Vec::new();
+    // let mut ratings: Vec<QuestionChunk> = Vec::new();
+    let mut this_chunk_str: String = "".to_string();
 
-    for line in content.lines() {
-        if line == "" {
+    let mut lines  = content.lines().peekable();
 
-            current_chunk = "".to_string();
+    while let Some(line) = lines.next() {
+        if !line.is_empty() {
+            this_chunk_str += line;
+            this_chunk_str += "\n";
+    
         }
-        current_chunk += line;
+        if line.is_empty() || lines.peek().is_none(){
+            eprintln!("question chunk: {}", this_chunk_str);
+            let this_chunk = QuestionChunk::from(this_chunk_str.clone());
+
+            if this_chunk.get_type()? == QuestionType::Long
+                && this_chunk.get_long_type()? == LongQuesitonType::Description 
+            {
+                descriptions.extend(this_chunk.get_answer()?);
+                eprintln!("description chunk: {}", this_chunk_str);
+            }
+
+            this_chunk_str = "".to_string();
+        }
+   }
+
+    let mut return_content = "".to_string();
+    for line in descriptions {
+        let line_text= line.get_text()?;
+        return_content += line_text.as_str();
+        return_content += "\n";
     }
 
-    todo!()
+    Ok(return_content)
 }
 
-pub fn parse_display_text(content: &String) -> std::io::Result<Vec<String>>{
-
-
+pub fn parse_display_text(content: &String) -> std::io::Result<Vec<String>> {
     let (term_width, _) = terminal::size()?;
 
     let mut terminal_lines: Vec<String> = Vec::new();
@@ -61,7 +84,7 @@ pub fn parse_display_text(content: &String) -> std::io::Result<Vec<String>>{
         terminal_lines.push(terminal_line.clone());
         terminal_line = "".to_string();
     }
- 
+
     terminal_lines.push(terminal_line.clone());
     Ok(terminal_lines)
 }
@@ -74,10 +97,8 @@ pub fn write_display_content(
 ) -> std::io::Result<()> {
     execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
 
-    let (_ , term_height) = terminal::size()?;
-
+    let (_, term_height) = terminal::size()?;
     let mut line_y = 0;
-
     let mut path_str = "";
 
     if let Some(stem_os) = path.file_stem() {
@@ -96,7 +117,7 @@ pub fn write_display_content(
 
     let mut line_idx = 0;
     for line in terminal_lines {
-        if line_idx > height_index
+        if line_idx >= height_index
             && line_idx < height_index + term_height as usize - init_line_y as usize + 1
         {
             queue!(
