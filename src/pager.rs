@@ -14,7 +14,7 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     eprintln!("trying to format content..");
     // let mut chunk_vec: Vec<QuestionChunk> = Vec::new();
     // let mut notes: Vec<QuestionChunk> = Vec::new();
-    let mut descriptions: Vec<Question> = Vec::new();
+    let mut descriptions: Vec<String> = Vec::new();
     // let mut ratings: Vec<QuestionChunk> = Vec::new();
     let mut this_chunk_str: String = "".to_string();
 
@@ -27,14 +27,19 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     
         }
         if line.is_empty() || lines.peek().is_none(){
-            eprintln!("question chunk: {}", this_chunk_str);
             let this_chunk = QuestionChunk::from(this_chunk_str.clone());
 
             if this_chunk.get_type()? == QuestionType::Long
                 && this_chunk.get_long_type()? == LongQuesitonType::Description 
             {
-                descriptions.extend(this_chunk.get_answer()?);
-                eprintln!("description chunk: {}", this_chunk_str);
+                let mut chunk_iter = this_chunk.get_answer()?.into_iter();
+                if let Some(question) = chunk_iter.next(){
+                    descriptions.push(format!("    {}", question.get_text()?));
+                }
+
+                while let Some(question) = chunk_iter.next()  {
+                    descriptions.push(question.get_text()?);
+                }
             }
 
             this_chunk_str = "".to_string();
@@ -42,11 +47,7 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
    }
 
     let mut return_content = "".to_string();
-    for line in descriptions {
-        let line_text= line.get_text()?;
-        return_content += line_text.as_str();
-        return_content += "\n";
-    }
+    return_content += descriptions.join("\n").as_str();
 
     Ok(return_content)
 }
