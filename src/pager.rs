@@ -138,7 +138,7 @@ pub fn write_display_content(
     let mut line_idx = 0;
     for line in terminal_lines {
         if line_idx >= height_index
-            && line_idx < height_index + term_height as usize - init_line_y as usize + 1
+            && line_idx < height_index + term_height as usize - init_line_y as usize 
         {
             queue!(
                 stdout,

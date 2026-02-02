@@ -130,7 +130,7 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
                 }
                 KeyCode::Char('j') => {
                     let (_, term_height) = terminal::size()?;
-                    if terminal_lines.len() - height_index > term_height as usize {
+                    if terminal_lines.len() - height_index >= term_height as usize {
                         height_index += 1;
                         height_changed = true;
                     }
