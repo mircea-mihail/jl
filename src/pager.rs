@@ -7,12 +7,12 @@ use crossterm::{
 };
 
 use crate::question_structs::{
-    ChunkParser, Informative, PromptQuestionType, QuestionChunk, QuestionType,
+    ChunkParser, Informative, PromptQuestionType, QuestionChunk
 };
 
 pub fn format_content(content: &String) -> std::io::Result<String> {
     // let mut chunk_vec: Vec<QuestionChunk> = Vec::new();
-    // let mut notes: Vec<QuestionChunk> = Vec::new();
+    let mut notes: Vec<String> = Vec::new();
     let mut descriptions: Vec<String> = Vec::new();
     let mut ratings: Vec<String> = Vec::new();
     let mut this_chunk_str: String = "".to_string();
@@ -36,23 +36,37 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
                 }
             }
 
-            if this_chunk.get_prompt_type()? == PromptQuestionType::Description 
-            {
+            if this_chunk.get_prompt_type()? == PromptQuestionType::Description {
                 while let Some(question) = chunk_iter.next()  {
-                    descriptions.push(format!("    {}", question.get_text()?));
+                    descriptions.push(format!("{}", question.get_text()?));
                 }
             }
 
+            if this_chunk.get_prompt_type()? == PromptQuestionType::Note {
+                while let Some(question) = chunk_iter.next()  {
+                    notes.push(format!("{}", question.get_text()?));
+                }
+            }
 
             this_chunk_str = "".to_string();
         }
    }
-
     let mut return_content = "".to_string();
-    return_content += "rating: ";
-    return_content += ratings.join("->").as_str();
-    return_content += "\n\ndescription: \n";
-    return_content += descriptions.join("\n").as_str();
+
+    if ! ratings.is_empty() {
+        return_content += "rating: ";
+        return_content += ratings.join("->").as_str();
+    }
+
+    if !descriptions.is_empty() {
+        return_content += "\n\ndescription: \n    ";
+        return_content += descriptions.join("\n").as_str();
+    }
+
+    if !notes.is_empty() {
+        return_content += "\n\nnotes: \n    ";
+        return_content += notes.join("\n").as_str();
+    }
 
     Ok(return_content)
 }
