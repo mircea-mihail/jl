@@ -7,15 +7,14 @@ use crossterm::{
 };
 
 use crate::question_structs::{
-    ChunkParser, Informative, LongQuesitonType, Question, QuestionChunk, QuestionType,
+    ChunkParser, Informative, PromptQuestionType, QuestionChunk, QuestionType,
 };
 
 pub fn format_content(content: &String) -> std::io::Result<String> {
-    eprintln!("trying to format content..");
     // let mut chunk_vec: Vec<QuestionChunk> = Vec::new();
     // let mut notes: Vec<QuestionChunk> = Vec::new();
     let mut descriptions: Vec<String> = Vec::new();
-    // let mut ratings: Vec<QuestionChunk> = Vec::new();
+    let mut ratings: Vec<String> = Vec::new();
     let mut this_chunk_str: String = "".to_string();
 
     let mut lines  = content.lines().peekable();
@@ -28,25 +27,31 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
         }
         if line.is_empty() || lines.peek().is_none(){
             let this_chunk = QuestionChunk::from(this_chunk_str.clone());
+            let mut chunk_iter = this_chunk.get_answer()?.into_iter();
 
-            if this_chunk.get_type()? == QuestionType::Long
-                && this_chunk.get_long_type()? == LongQuesitonType::Description 
-            {
-                let mut chunk_iter = this_chunk.get_answer()?.into_iter();
-                if let Some(question) = chunk_iter.next(){
-                    descriptions.push(format!("    {}", question.get_text()?));
-                }
-
+            if this_chunk.get_prompt_type()? == PromptQuestionType::Rating {
                 while let Some(question) = chunk_iter.next()  {
-                    descriptions.push(question.get_text()?);
+                    ratings.push(question.get_text()?);
+                    eprintln!("got rating {}", question.get_text()?);
                 }
             }
+
+            if this_chunk.get_prompt_type()? == PromptQuestionType::Description 
+            {
+                while let Some(question) = chunk_iter.next()  {
+                    descriptions.push(format!("    {}", question.get_text()?));
+                }
+            }
+
 
             this_chunk_str = "".to_string();
         }
    }
 
     let mut return_content = "".to_string();
+    return_content += "rating: ";
+    return_content += ratings.join("->").as_str();
+    return_content += "\n\ndescription: \n";
     return_content += descriptions.join("\n").as_str();
 
     Ok(return_content)
