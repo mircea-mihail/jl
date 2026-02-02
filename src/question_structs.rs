@@ -17,7 +17,7 @@ pub enum QuestionType {
 }
 
 #[derive(PartialEq)]
-pub enum LongQuesitonType {
+pub enum PromptQuestionType {
     Regular,
     Description,
     Note,
@@ -68,7 +68,7 @@ pub trait Informative {
     fn is_question(&self) -> std::io::Result<bool>;
     fn get_type(&self) -> std::io::Result<QuestionType>;
     fn get_type_as_str(&self) -> std::io::Result<String>;
-    fn get_long_type(&self) -> std::io::Result<LongQuesitonType>;
+    fn get_prompt_type(&self) -> std::io::Result<PromptQuestionType>;
     fn get_text(&self) -> std::io::Result<String>;
 
 }
@@ -92,8 +92,8 @@ impl Informative for QuestionChunk {
         self.get_question()?.get_type_as_str()
     }
 
-    fn get_long_type(&self) -> std::io::Result<LongQuesitonType> {
-        self.get_question()?.get_long_type()
+    fn get_prompt_type(&self) -> std::io::Result<PromptQuestionType> {
+        self.get_question()?.get_prompt_type()
     }
 
     fn get_text(&self) -> std::io::Result<String> {
@@ -139,26 +139,20 @@ impl Informative for Question {
         Ok(question_type.to_string())
     }
 
-    fn get_long_type(&self) -> std::io::Result<LongQuesitonType> {
-        if self.get_type()? != QuestionType::Long {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "cannot get long type on questions that are not of type long",
-                )) 
-        }
+    fn get_prompt_type(&self) -> std::io::Result<PromptQuestionType> {
         let question_string = &self.question;
 
         if question_string == cli::DESCRIPTION_QUESTION_STR {
-            return Ok(LongQuesitonType::Description);
+            return Ok(PromptQuestionType::Description);
         }
         if question_string == cli::NOTE_QUESTION_STR {
-            return Ok(LongQuesitonType::Note);
+            return Ok(PromptQuestionType::Note);
         }
         if question_string == cli::RATING_QUESTION_STR {
-            return Ok(LongQuesitonType::Rating);
+            return Ok(PromptQuestionType::Rating);
         }
 
-        return Ok(LongQuesitonType::Regular);
+        return Ok(PromptQuestionType::Regular);
     }
 
     fn get_text(&self) -> std::io::Result<String> {
