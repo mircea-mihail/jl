@@ -7,14 +7,15 @@ use crossterm::{
 };
 
 use crate::question_structs::{
-    ChunkParser, Informative, PromptQuestionType, QuestionChunk
+    ChunkParser, Informative, PromptQuestionType, QuestionChunk, QuestionType
 };
 
 pub fn format_content(content: &String) -> std::io::Result<String> {
-    // let mut chunk_vec: Vec<QuestionChunk> = Vec::new();
     let mut notes: Vec<String> = Vec::new();
     let mut descriptions: Vec<String> = Vec::new();
     let mut ratings: Vec<String> = Vec::new();
+    let mut long_questions: Vec<String> = Vec::new();
+    let mut short_questions: Vec<String> = Vec::new();
     let mut this_chunk_str: String = "".to_string();
 
     let mut lines  = content.lines().peekable();
@@ -34,17 +35,21 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
                     ratings.push(question.get_text()?);
                     eprintln!("got rating {}", question.get_text()?);
                 }
-            }
-
-            if this_chunk.get_prompt_type()? == PromptQuestionType::Description {
+            } 
+            else if this_chunk.get_prompt_type()? == PromptQuestionType::Description {
                 while let Some(question) = chunk_iter.next()  {
                     descriptions.push(format!("{}", question.get_text()?));
                 }
             }
-
-            if this_chunk.get_prompt_type()? == PromptQuestionType::Note {
+            else if this_chunk.get_prompt_type()? == PromptQuestionType::Note {
                 while let Some(question) = chunk_iter.next()  {
                     notes.push(format!("{}", question.get_text()?));
+                }
+            }
+            else if this_chunk.get_type()? == QuestionType::Long{
+                while let Some(question) = chunk_iter.next()  {
+                    long_questions.push(format!("    {}", this_chunk.get_question()?.get_text()?));
+                    long_questions.push(format!("    {}\n", question.get_text()?));
                 }
             }
 
@@ -66,6 +71,11 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     if !notes.is_empty() {
         return_content += "\n\nnotes: \n    ";
         return_content += notes.join("\n").as_str();
+    }
+
+    if !long_questions.is_empty() || !short_questions.is_empty() {
+        return_content += "\n\nother questions: \n";
+        return_content += long_questions.join("\n").as_str();
     }
 
     Ok(return_content)
