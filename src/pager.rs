@@ -52,6 +52,11 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
                     long_questions.push(format!("    {}\n", question.get_text()?));
                 }
             }
+            else {
+                while let Some(question) = chunk_iter.next()  {
+                    short_questions.push(format!("{}\n    {}\n", this_chunk.get_question()?.get_text()?, question.get_text()?));
+                }
+            }
 
             this_chunk_str = "".to_string();
         }
@@ -76,6 +81,9 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     if !long_questions.is_empty() || !short_questions.is_empty() {
         return_content += "\n\nother questions: \n";
         return_content += long_questions.join("\n").as_str();
+
+        return_content += "\n";
+        return_content += short_questions.join("\n").as_str();
     }
 
     Ok(return_content)
