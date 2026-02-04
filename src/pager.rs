@@ -37,11 +37,19 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
                 }
             } 
             else if this_chunk.get_prompt_type()? == PromptQuestionType::Description {
+                if let Some(question) = chunk_iter.next()  {
+                    descriptions.push(format!("    {}", question.get_text()?));
+                }
+
                 while let Some(question) = chunk_iter.next()  {
                     descriptions.push(format!("{}", question.get_text()?));
                 }
             }
             else if this_chunk.get_prompt_type()? == PromptQuestionType::Note {
+                if let Some(question) = chunk_iter.next() {
+                    notes.push(format!("    {}", question.get_text()?));
+                }
+
                 while let Some(question) = chunk_iter.next()  {
                     notes.push(format!("{}", question.get_text()?));
                 }
@@ -66,15 +74,16 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     if ! ratings.is_empty() {
         return_content += "rating: ";
         return_content += ratings.join("->").as_str();
+        return_content += "\n\n";
     }
 
     if !descriptions.is_empty() {
-        return_content += "\n\ndescription: \n    ";
+        return_content += "description: \n";
         return_content += descriptions.join("\n").as_str();
     }
 
     if !notes.is_empty() {
-        return_content += "\n\nnotes: \n    ";
+        return_content += "\n\nnotes: \n";
         return_content += notes.join("\n").as_str();
     }
 
