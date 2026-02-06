@@ -105,6 +105,7 @@ pub fn parse_args(
     question: &mut Question,
     file: &mut std::fs::File,
     question_chance: &mut f64,
+    write_question_gap: &bool
 ) -> std::io::Result<bool> {
     let args = Cli::parse();
 
@@ -113,7 +114,9 @@ pub fn parse_args(
             *question = DESCRIPTION_QUESTION_STR.to_string().into();
 
             if a != DEFAULT_DESCRIPTION {
-                file.write_all("\n".as_bytes())?;
+                if *write_question_gap {
+                    file.write_all("\n".as_bytes())?;
+                }
                 file_parsing::write_question(&file, &question)?;
                 file_parsing::write_answer(&file, &a)?;
                 return Ok(true);
@@ -126,7 +129,9 @@ pub fn parse_args(
             *question = NOTE_QUESTION_STR.to_string().into();
 
             if a != DEFAULT_NOTE {
-                file.write_all("\n".as_bytes())?;
+                if *write_question_gap {
+                    file.write_all("\n".as_bytes())?;
+                }
                 file_parsing::write_question(&file, &question)?;
                 file_parsing::write_answer(&file, &a)?;
                 return Ok(true);
@@ -141,7 +146,9 @@ pub fn parse_args(
                 .into();
 
             if a != DEFAULT_RATING.parse::<f64>().unwrap() {
-                file.write_all("\n".as_bytes())?;
+                if *write_question_gap {
+                    file.write_all("\n".as_bytes())?;
+                }
                 file_parsing::write_question(&file, &question)?;
                 file_parsing::write_answer(&file, &a.to_string())?;
                 return Ok(true);
