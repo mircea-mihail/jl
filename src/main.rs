@@ -68,7 +68,7 @@ fn main() -> rustyline::Result<()> {
     let mut question_to_ask: Question = Question::default();
     let mut question_chance: f64 = 1.0;
 
-    if cli::parse_args(&mut question_to_ask, &mut file, &mut question_chance)? {
+    if cli::parse_args(&mut question_to_ask, &mut file, &mut question_chance, &write_question_gap)? {
         return Ok(());
     }
 
