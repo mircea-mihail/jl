@@ -71,7 +71,7 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
    }
     let mut return_content = "".to_string();
 
-    if ! ratings.is_empty() {
+    if !ratings.is_empty() {
         return_content += "rating: ";
         return_content += ratings.join("->").as_str();
         return_content += "\n\n";
@@ -80,18 +80,22 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     if !descriptions.is_empty() {
         return_content += "description: \n";
         return_content += descriptions.join("\n").as_str();
+        return_content += "\n\n";
     }
 
     if !notes.is_empty() {
-        return_content += "\n\nnotes: \n";
+        return_content += "notes: \n";
         return_content += notes.join("\n").as_str();
+        return_content += "\n\n";
     }
 
-    if !long_questions.is_empty() || !short_questions.is_empty() {
-        return_content += "\n\nother questions: \n";
+    if !long_questions.is_empty() {
+        return_content += "other questions: \n";
         return_content += long_questions.join("\n").as_str();
-
         return_content += "\n";
+    }
+
+    if !short_questions.is_empty() {
         return_content += short_questions.join("\n").as_str();
     }
 
