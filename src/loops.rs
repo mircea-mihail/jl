@@ -14,6 +14,8 @@ use crossterm::{
     execute, terminal,
 };
 
+const ERROR_PARSING_FILE: &str = "[ error encountered parsing the file ]";
+
 pub fn get_input(
     question: Question,
     file: &mut fs::File,
@@ -92,7 +94,7 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
     execute!(stdout, terminal::EnterAlternateScreen)?;
 
     let mut file_content = fs::read_to_string(&journal_paths[file_index])?;
-    let mut formatted_content = pager::format_content(&file_content)?;
+    let mut formatted_content = pager::format_content(&file_content).unwrap_or(ERROR_PARSING_FILE.to_string());
     let mut terminal_lines = pager::parse_display_text(&formatted_content)?;
 
     pager::write_display_content(
@@ -160,7 +162,7 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
             file_index = file_index % (idx_max_len + 1);
             height_index = 0;
             file_content = fs::read_to_string(&journal_paths[file_index])?;
-            formatted_content = pager::format_content(&file_content)?;
+            formatted_content = pager::format_content(&file_content).unwrap_or(ERROR_PARSING_FILE.to_string());
             terminal_lines = pager::parse_display_text(&formatted_content)?;
             pager::write_display_content(
                 &journal_paths[file_index],
