@@ -119,11 +119,11 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
         }
         if let Event::Key(key) = event {
             match key.code {
-                KeyCode::Char('l') => {
+                KeyCode::Char('l') | KeyCode::Right => {
                     file_index += 1;
                     file_changed = true;
                 }
-                KeyCode::Char('h') => {
+                KeyCode::Char('h') | KeyCode::Left => {
                     if file_index == 0 {
                         file_index = idx_max_len
                     } else {
@@ -131,20 +131,37 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
                     }
                     file_changed = true;
                 }
-                KeyCode::Char('j') => {
+                KeyCode::Char('j') | KeyCode::Down | KeyCode::Enter=> {
                     let (_, term_height) = terminal::size()?;
                     if terminal_lines.len() - height_index >= term_height as usize {
                         height_index += 1;
                         height_changed = true;
                     }
                 }
-                KeyCode::Char('k') => {
+                KeyCode::Char('k') | KeyCode::Up | KeyCode::Backspace => {
                     if height_index != 0 {
                         height_index -= 1;
                         height_changed = true;
                     }
                 }
-                KeyCode::Char('q') => break,
+                KeyCode::Char('G') => {
+                    let (_, term_height) = terminal::size()?;
+                    if terminal_lines.len() > term_height as usize  {
+                        let desired_height = terminal_lines.len() + 1 - term_height as usize;
+                        if height_index != desired_height {
+                            height_index = desired_height;
+                            height_changed = true;
+                        }
+    
+                    }
+                }
+                KeyCode::Char('g') => {
+                    if height_index != 0 {
+                        height_index = 0;
+                        height_changed = true;
+                    }
+                }
+                KeyCode::Char('q') | KeyCode::Esc => break,
                 _ => {}
             }
         }
