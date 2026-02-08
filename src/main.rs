@@ -11,13 +11,13 @@
 //      show a table/graph for short questions for the week
 //      and maybe something interactive with browsing longer notes/ a compilation of notes?
 
-mod question_structs;
 mod cli;
-use question_structs::{Question};
+mod question_structs;
+use question_structs::Question;
 mod file_parsing;
-mod utility;
 mod loops;
 mod pager;
+mod utility;
 
 use home;
 use rand::Rng;
@@ -29,10 +29,8 @@ use crate::cli::parse_days_before;
 const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
 
+use crossterm::{execute, terminal};
 use rustyline::error::ReadlineError;
-use crossterm::{
-    execute, terminal,
-};
 use std::io;
 
 fn main() -> rustyline::Result<()> {
@@ -87,7 +85,12 @@ fn main() -> rustyline::Result<()> {
     let mut question_to_ask: Question = Question::default();
     let mut question_chance: f64 = 1.0;
 
-    if cli::parse_args(&mut question_to_ask, &mut file, &mut question_chance, &write_question_gap)? {
+    if cli::parse_args(
+        &mut question_to_ask,
+        &mut file,
+        &mut question_chance,
+        &write_question_gap,
+    )? {
         return Ok(());
     }
 

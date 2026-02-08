@@ -1,4 +1,4 @@
-use std::{io::Write};
+use std::io::Write;
 
 use crossterm::{
     cursor, execute, queue,
@@ -7,7 +7,7 @@ use crossterm::{
 };
 
 use crate::question_structs::{
-    ChunkParser, Informative, PromptQuestionType, QuestionChunk, QuestionType
+    ChunkParser, Informative, PromptQuestionType, QuestionChunk, QuestionType,
 };
 
 // const format_error_chunk: QuestionChunk  = QuestionChunk::new();
@@ -21,15 +21,14 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     let mut short_questions: Vec<String> = Vec::new();
     let mut this_chunk_str: String = "".to_string();
 
-    let mut lines  = content.lines().peekable();
+    let mut lines = content.lines().peekable();
 
     while let Some(line) = lines.next() {
         if !line.is_empty() {
             this_chunk_str += line;
             this_chunk_str += "\n";
-    
         }
-        if (line.is_empty() || lines.peek().is_none()) && !this_chunk_str.trim().is_empty(){
+        if (line.is_empty() || lines.peek().is_none()) && !this_chunk_str.trim().is_empty() {
             let mut invalid_chunk = false;
 
             this_chunk_str = this_chunk_str.trim().to_string();
@@ -47,45 +46,46 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
                 let prompt_type = this_chunk.get_prompt_type()?;
 
                 if prompt_type == PromptQuestionType::Rating {
-                    while let Some(question) = chunk_iter.next()  {
+                    while let Some(question) = chunk_iter.next() {
                         ratings.push(question.get_text()?);
                         eprintln!("got rating {}", question.get_text()?);
                     }
-                } 
-                else if prompt_type == PromptQuestionType::Description {
-                    if let Some(question) = chunk_iter.next()  {
+                } else if prompt_type == PromptQuestionType::Description {
+                    if let Some(question) = chunk_iter.next() {
                         descriptions.push(format!("    {}", question.get_text()?));
                     }
 
-                    while let Some(question) = chunk_iter.next()  {
+                    while let Some(question) = chunk_iter.next() {
                         descriptions.push(format!("{}", question.get_text()?));
                     }
-                }
-                else if prompt_type == PromptQuestionType::Note {
+                } else if prompt_type == PromptQuestionType::Note {
                     if let Some(question) = chunk_iter.next() {
                         notes.push(format!("    {}", question.get_text()?));
                     }
 
-                    while let Some(question) = chunk_iter.next()  {
+                    while let Some(question) = chunk_iter.next() {
                         notes.push(format!("{}", question.get_text()?));
                     }
-                }
-                else if chunk_type == QuestionType::Long{
-                    while let Some(question) = chunk_iter.next()  {
-                        long_questions.push(format!("    {}", this_chunk.get_question()?.get_text()?));
+                } else if chunk_type == QuestionType::Long {
+                    while let Some(question) = chunk_iter.next() {
+                        long_questions
+                            .push(format!("    {}", this_chunk.get_question()?.get_text()?));
                         long_questions.push(format!("    {}\n", question.get_text()?));
                     }
-                }
-                else {
-                    while let Some(question) = chunk_iter.next()  {
-                        short_questions.push(format!("{}\n    {}\n", this_chunk.get_question()?.get_text()?, question.get_text()?));
+                } else {
+                    while let Some(question) = chunk_iter.next() {
+                        short_questions.push(format!(
+                            "{}\n    {}\n",
+                            this_chunk.get_question()?.get_text()?,
+                            question.get_text()?
+                        ));
                     }
                 }
             }
 
             this_chunk_str = "".to_string();
         }
-   }
+    }
     let mut return_content = "".to_string();
 
     if !ratings.is_empty() {
@@ -118,7 +118,8 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     }
 
     if invalid_chunks_number != 0 {
-        return_content += format!("detected {} invalid chunks in file", invalid_chunks_number).as_str();
+        return_content +=
+            format!("detected {} invalid chunks in file", invalid_chunks_number).as_str();
     }
 
     Ok(return_content)
@@ -191,7 +192,7 @@ pub fn write_display_content(
     let mut line_idx = 0;
     for line in terminal_lines {
         if line_idx >= height_index
-            && line_idx < height_index + term_height as usize - init_line_y as usize 
+            && line_idx < height_index + term_height as usize - init_line_y as usize
         {
             queue!(
                 stdout,

@@ -1,8 +1,8 @@
 use crate::file_parsing;
-use crate::question_structs::{Question};
+use crate::question_structs::Question;
 
 use clap::Parser;
-use std::io::{Write};
+use std::io::Write;
 
 pub const DESCRIPTION_QUESTION_STR: &str = "l: Add a description about the day:";
 pub const NOTE_QUESTION_STR: &str = "l: Add a note during the day:";
@@ -68,7 +68,7 @@ pub struct Cli {
     update: Option<i64>,
 }
 
-pub fn parse_days_before() -> i64{
+pub fn parse_days_before() -> i64 {
     let args = Cli::parse();
 
     let mut days_before_today: i64 = 0;
@@ -89,7 +89,7 @@ pub fn parse_days_before() -> i64{
     days_before_today
 }
 
-pub fn show_entries() -> bool{
+pub fn show_entries() -> bool {
     let args = Cli::parse();
     let mut show_entries: bool = false;
     args.entries.map(|e: bool| {
@@ -105,7 +105,7 @@ pub fn parse_args(
     question: &mut Question,
     file: &mut std::fs::File,
     question_chance: &mut f64,
-    write_question_gap: &bool
+    write_question_gap: &bool,
 ) -> std::io::Result<bool> {
     let args = Cli::parse();
 
@@ -141,9 +141,7 @@ pub fn parse_args(
     }
     match args.rating {
         Some(a) => {
-            *question = RATING_QUESTION_STR
-                .to_string()
-                .into();
+            *question = RATING_QUESTION_STR.to_string().into();
 
             if a != DEFAULT_RATING.parse::<f64>().unwrap() {
                 if *write_question_gap {

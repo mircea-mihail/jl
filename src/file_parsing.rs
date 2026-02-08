@@ -9,16 +9,22 @@ use crate::utility;
 
 use crate::question_structs::{Informative, Question};
 
-use rand::seq::SliceRandom; 
+use rand::seq::SliceRandom;
 
 use xxhash_rust::xxh3::xxh3_128;
 
-fn generate_jumbled_questions_file(questions_path: &Path, jumbled_questions_path: &Path) -> io::Result<()>{
+fn generate_jumbled_questions_file(
+    questions_path: &Path,
+    jumbled_questions_path: &Path,
+) -> io::Result<()> {
     let questions_text = fs::read_to_string(questions_path)?;
     let mut questions: Vec<Question> = Vec::new();
     let mut rng = rand::rng();
 
-    for question in questions_text.split("\n").map(|a| <Question as From<_>>::from(a.to_string())) {
+    for question in questions_text
+        .split("\n")
+        .map(|a| <Question as From<_>>::from(a.to_string()))
+    {
         if question.is_question()? {
             questions.push(question);
         }
@@ -37,19 +43,22 @@ fn generate_jumbled_questions_file(questions_path: &Path, jumbled_questions_path
     return Ok(());
 }
 
-pub fn get_question(
-    questions_path: &Path,
-) -> io::Result<Question> {
+pub fn get_question(questions_path: &Path) -> io::Result<Question> {
     let hash = xxh3_128(&utility::get_day_file_name(0).as_bytes());
     let hashed_string = format!("{:032x}", hash)[..15].to_string();
 
     let jumbled_questions_path = std::path::PathBuf::from("/tmp")
-        .join( "jl-".to_string() + &hashed_string + "-" + &utility::get_day_file_name(0));
+        .join("jl-".to_string() + &hashed_string + "-" + &utility::get_day_file_name(0));
 
     if !jumbled_questions_path.exists() {
         fs::write(&jumbled_questions_path, "")?;
     }
-    if jumbled_questions_path.metadata().map(|m| m.len()).unwrap_or(0) == 0 {
+    if jumbled_questions_path
+        .metadata()
+        .map(|m| m.len())
+        .unwrap_or(0)
+        == 0
+    {
         generate_jumbled_questions_file(&questions_path, &jumbled_questions_path)?;
     }
 
@@ -61,16 +70,17 @@ pub fn get_question(
         .open(&jumbled_questions_path)?;
 
     let number_of_quesions = all_questions.lines().count();
-    let unconsumed_string: String = all_questions
-        .lines()
-        .take(number_of_quesions - 1)
-        .fold(String::new(), |mut acc, line| {
-            if !acc.is_empty() {
-                acc.push('\n');
-            }
-            acc.push_str(line);
-            acc
-        });
+    let unconsumed_string: String =
+        all_questions
+            .lines()
+            .take(number_of_quesions - 1)
+            .fold(String::new(), |mut acc, line| {
+                if !acc.is_empty() {
+                    acc.push('\n');
+                }
+                acc.push_str(line);
+                acc
+            });
 
     file.write(unconsumed_string.as_bytes())?;
 
@@ -79,8 +89,7 @@ pub fn get_question(
         .last()
         .ok_or(Error::new(ErrorKind::InvalidData, "no questions found"))?
         .to_string()
-        .into()
-    )
+        .into())
 }
 
 pub fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<bool> {

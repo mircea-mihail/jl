@@ -1,6 +1,6 @@
 use crate::file_parsing;
-use crate::question_structs::{Informative, Question, QuestionType};
 use crate::pager;
+use crate::question_structs::{Informative, Question, QuestionType};
 
 use std::io::{self, Write};
 
@@ -82,6 +82,7 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
     }
     journal_paths.sort();
     let idx_max_len = journal_paths.len() - 1;
+
     let mut file_index = idx_max_len;
     let mut height_index = 0;
 
@@ -89,12 +90,12 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
     let mut file_changed = false;
 
     let mut stdout = io::stdout();
-
     terminal::enable_raw_mode()?;
     execute!(stdout, terminal::EnterAlternateScreen)?;
 
     let mut file_content = fs::read_to_string(&journal_paths[file_index])?;
-    let mut formatted_content = pager::format_content(&file_content).unwrap_or(ERROR_PARSING_FILE.to_string());
+    let mut formatted_content =
+        pager::format_content(&file_content).unwrap_or(ERROR_PARSING_FILE.to_string());
     let mut terminal_lines = pager::parse_display_text(&formatted_content)?;
 
     pager::write_display_content(
@@ -106,15 +107,15 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
 
     loop {
         let event = event::read()?;
-        if let Event::Resize(_, _)  = event {
+        if let Event::Resize(_, _) = event {
             terminal_lines = pager::parse_display_text(&formatted_content)?;
+
             pager::write_display_content(
                 &journal_paths[file_index],
                 height_index,
                 &terminal_lines,
                 &stdout,
             )?;
- 
         }
         if let Event::Key(key) = event {
             match key.code {
@@ -161,9 +162,12 @@ pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
             file_changed = false;
             file_index = file_index % (idx_max_len + 1);
             height_index = 0;
+
             file_content = fs::read_to_string(&journal_paths[file_index])?;
-            formatted_content = pager::format_content(&file_content).unwrap_or(ERROR_PARSING_FILE.to_string());
+            formatted_content =
+                pager::format_content(&file_content).unwrap_or(ERROR_PARSING_FILE.to_string());
             terminal_lines = pager::parse_display_text(&formatted_content)?;
+
             pager::write_display_content(
                 &journal_paths[file_index],
                 height_index,
