@@ -29,13 +29,32 @@ use crate::cli::parse_days_before;
 const JL_DIR_NAME: &str = ".jl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
 
+use rustyline::error::ReadlineError;
+use crossterm::{
+    execute, terminal,
+};
+use std::io;
+
 fn main() -> rustyline::Result<()> {
     let mut jl_dir_path = home::home_dir().expect("Could not find home directory");
     jl_dir_path.push(JL_DIR_NAME);
 
     if cli::show_entries() {
-        loops::view_files(&jl_dir_path)?;
-        return Ok(());
+        match loops::view_files(&jl_dir_path) {
+            Ok(_) => {
+                return Ok(());
+            }
+            Err(e) => {
+                let mut stdout = io::stdout();
+                execute!(stdout, terminal::LeaveAlternateScreen)?;
+                terminal::disable_raw_mode()?;
+
+                return Err(ReadlineError::Io(io::Error::new(
+                    io::ErrorKind::Other,
+                    e.to_string(),
+                )));
+            }
+        }
     }
     let days_before_today: i64 = parse_days_before();
 
