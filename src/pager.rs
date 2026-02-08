@@ -39,8 +39,6 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
                 invalid_chunk = true;
                 invalid_chunks_number += 1;
 
-                eprintln!("error chunk: {}", this_chunk_str);
-
                 QuestionType::Empty
             });
 
