@@ -8,10 +8,11 @@ Everything is stored locally, so your data is as safe as your computer.
 
 ## Installation Guide
 
-To install **jl**, run:
+To install **jl** locally run the first command, and to also install the binaries in /usr/local/bin run the second:
 
 ```bash
-sudo make install
+$ make install-user
+$ sudo make install-bin
 ```
 
 To uninstall it:
@@ -61,4 +62,20 @@ $ jl -n "i'm at home and i feel so boared, just want to lay down and do nothing 
 $ jl -r 8
 
 $ jl -u 2
+```
+
+## Questions file
+
+This file contains all the questions you want to be asked when calling jl or when doing jl -s in your bashrc. The short questions are meant to be answered with numbers or short text, while the long ones expect a multi line answer. One example of a question file I currently use is the one below, mostly tracking health habits I'm currently interested in. Place this file in the ~/.jl directory.
+
+```
+s: Number of coffees? 
+s: Grams of sugar?
+s: Cups of tea?
+s: Hours of sleep?
+s: Ate meat?
+s: Number of beers?
+
+l: What's a nice thing from today?
+l: What's an upsetting thing from today?
 ```
