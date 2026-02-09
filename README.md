@@ -38,6 +38,7 @@ jl [OPTIONS]
 | `-n` | `--note` | `[NOTE]` | Add a short note during the day |
 | `-r` | `--rating` | `[RATING]` | Rate your day out of 10 (can be any number) |
 | `-s` | `--sometimes` | `[SOMETIMES]` | Lower chances of a question being asked (`true` / `false`) |
+| `-e` | `--entries` | `[<ENTRIES>]` | Show all entries into the journal [possible values: true, false] |
 | `-u` | `--update` | `<UPDATE>` | Update journal from x days ago |
 | `-h` | `--help` | — | Print help |
 
