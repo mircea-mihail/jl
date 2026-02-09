@@ -3,8 +3,6 @@
 // make the vim extension go to normal mode when pressing kj
 // make cursor different in insert and normal mode (| for insert, box for insert)
 //
-// when displaying summaries, only show the final rating given (and maybe use the other ones to show how the day evolved)
-//      if someone has a rating of 5 in the morning but a 8 in the afternoon maybe show how the day improved and print the updates (if available)
 // use flags to input things:
 //      jl -w to show week notes
 //      jl -m to show months notes highlights

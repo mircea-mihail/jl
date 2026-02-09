@@ -1,4 +1,5 @@
 use std::io::Write;
+use std::collections::HashMap;
 
 use crossterm::{
     cursor, execute, queue,
@@ -18,7 +19,7 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     let mut descriptions: Vec<String> = Vec::new();
     let mut ratings: Vec<String> = Vec::new();
     let mut long_questions: Vec<String> = Vec::new();
-    let mut short_questions: Vec<String> = Vec::new();
+    let mut short_questions: HashMap<String, Vec<String>>= HashMap::new();
     let mut this_chunk_str: String = "".to_string();
 
     let mut lines = content.lines().peekable();
@@ -76,11 +77,10 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
                     }
                 } else {
                     while let Some(question) = answer_iter.next() {
-                        short_questions.push(format!(
-                            "{}\n    {}\n",
-                            this_chunk.get_question()?.get_text()?,
-                            question.get_text()?
-                        ));
+                        let question_text = this_chunk.get_question()?.get_text()?;
+                        short_questions.entry(question_text)
+                            .or_insert(Vec::new())
+                            .push(question.get_text()?);
                     }
                 }
             }
@@ -115,7 +115,12 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     }
 
     if !short_questions.is_empty() {
-        return_content += short_questions.join("\n").as_str();
+        for key_val in short_questions {
+            return_content += key_val.0.as_str();
+            return_content += "\n    ";
+            return_content += key_val.1.join(" -> ").as_str();
+            return_content += "\n\n";
+        }
         return_content += "\n";
     }
 
