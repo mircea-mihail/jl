@@ -80,7 +80,7 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
                         let question_text = this_chunk.get_question()?.get_text()?;
                         short_questions.entry(question_text)
                             .or_insert(Vec::new())
-                            .push(question.get_text()?);
+                            .push(format!("[{}] {}", info, question.get_text()?));
                     }
                 }
             }
