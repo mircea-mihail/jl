@@ -18,7 +18,7 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     let mut notes: Vec<String> = Vec::new();
     let mut descriptions: Vec<String> = Vec::new();
     let mut ratings: Vec<String> = Vec::new();
-    let mut long_questions: Vec<String> = Vec::new();
+    let mut long_questions: HashMap<String, Vec<String>>= HashMap::new();
     let mut short_questions: HashMap<String, Vec<String>>= HashMap::new();
     let mut this_chunk_str: String = "".to_string();
 
@@ -71,10 +71,11 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
                 
                 else if chunk_type == QuestionType::Long {
                     while let Some(question) = answer_iter.next() {
-                        long_questions
-                            .push(format!("    {}", this_chunk.get_question()?.get_text()?));
-                        long_questions.push(format!("{}\n", question.get_text()?));
-                    }
+                        let question_text = this_chunk.get_question()?.get_text()?;
+                        long_questions.entry(question_text)
+                            .or_insert(Vec::new())
+                            .push(format!("[{}] {}", info, question.get_text()?));
+                   }
                 } else {
                     while let Some(question) = answer_iter.next() {
                         let question_text = this_chunk.get_question()?.get_text()?;
@@ -109,8 +110,13 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     }
 
     if !long_questions.is_empty() {
-        return_content += "other questions: \n";
-        return_content += long_questions.join("\n").as_str();
+        return_content += "daily questions: \n";
+        for key_val in long_questions {
+            return_content += key_val.0.as_str();
+            return_content += "\n    ";
+            return_content += key_val.1.join("\n    ").as_str();
+            return_content += "\n";
+        }
         return_content += "\n";
     }
 
