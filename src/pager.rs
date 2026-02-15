@@ -1,5 +1,4 @@
-use std::io::Write;
-use std::collections::HashMap;
+use std::{collections::BTreeMap, io::Write};
 
 use crossterm::{
     cursor, execute, queue,
@@ -18,8 +17,8 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
     let mut notes: Vec<String> = Vec::new();
     let mut descriptions: Vec<String> = Vec::new();
     let mut ratings: Vec<String> = Vec::new();
-    let mut long_questions: HashMap<String, Vec<String>>= HashMap::new();
-    let mut short_questions: HashMap<String, Vec<String>>= HashMap::new();
+    let mut long_questions: BTreeMap<String, Vec<String>>= BTreeMap::new();
+    let mut short_questions: BTreeMap<String, Vec<String>>= BTreeMap::new();
     let mut this_chunk_str: String = "".to_string();
 
     let mut lines = content.lines().peekable();
@@ -111,20 +110,20 @@ pub fn format_content(content: &String) -> std::io::Result<String> {
 
     if !long_questions.is_empty() {
         return_content += "daily questions: \n";
-        for key_val in long_questions {
-            return_content += key_val.0.as_str();
+        for (key, val) in long_questions {
+            return_content += key.as_str();
             return_content += "\n    ";
-            return_content += key_val.1.join("\n    ").as_str();
+            return_content += val.join("\n    ").as_str();
             return_content += "\n";
         }
         return_content += "\n";
     }
 
     if !short_questions.is_empty() {
-        for key_val in short_questions {
-            return_content += key_val.0.as_str();
+        for (key, val) in short_questions {
+            return_content += key.as_str();
             return_content += "\n    ";
-            return_content += key_val.1.join(" -> ").as_str();
+            return_content += val.join(" -> ").as_str();
             return_content += "\n\n";
         }
         return_content += "\n";
