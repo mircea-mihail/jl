@@ -18,6 +18,7 @@ mod pager;
 mod utility;
 
 use home;
+use std::path::PathBuf;
 use rand::Rng;
 use std::fs;
 use std::fs::OpenOptions;
@@ -60,19 +61,30 @@ fn main() -> rustyline::Result<()> {
 
     let mut write_question_gap = true;
 
-    if !questions_file_path.exists() {
-        fs::write(
-            &questions_file_path,
-            "l: Long question\ns: Short question\n",
-        )
-        .expect("Failed to create question file\n");
-    }
     if !file_parsing::exists_today_file(&jl_dir_path, &today_file)? {
         fs::write(&today_file_path, "")?;
         write_question_gap = false;
     }
     if fs::metadata(&today_file_path)?.len() == 0 {
         write_question_gap = false;
+    }
+
+    // copy current dir questions file in ~/.jl folder or create an empty one otherwise if not existing there
+    let mut this_dir_questions_path = PathBuf::new();
+    this_dir_questions_path.push("./");
+    this_dir_questions_path.push(   QUESTION_FILE_NAME);
+
+    if this_dir_questions_path.exists(){ 
+        fs::copy(&this_dir_questions_path, &questions_file_path)?;
+    }
+    else {
+        if !questions_file_path.exists() {
+            fs::write(
+                &questions_file_path,
+                "l: Long question\ns: Short question\n",
+            )
+            .expect("Failed to create question file\n");
+        }
     }
 
     let mut file: fs::File = OpenOptions::new()
