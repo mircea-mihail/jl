@@ -1,7 +1,9 @@
 [package]
-name = "jl"
+name = "jrl"
 version = "0.1.0"
 edition = "2024"
+description = "Journaling terminal app that prompts you questions from time to time when opening a new terminal and allows you to rate, describe and take notes of your day, as well as view past entries"
+license = "MIT"
 
 [dependencies]
 chrono = "0.4.42"
