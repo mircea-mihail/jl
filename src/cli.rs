@@ -13,6 +13,7 @@ const DEFAULT_NOTE: &str = "No note provided";
 const DEFAULT_RATING: &str = "1212.1212";
 const DEFAULT_SOMETIMES: &str = "true";
 const DEFAULT_ENTRIES: &str = "true";
+const DEFAULT_UPDATE_QUESTIONS: &str = "true";
 
 const QUESTION_CHANCE: f64 = 0.5;
 
@@ -66,6 +67,28 @@ pub struct Cli {
     /// Update journal from x days ago
     #[arg(short, long, num_args = 1)]
     update: Option<i64>,
+
+    /// Replace the .jrl/questions.txt file with the questions.txt file from the current directory
+    #[arg (
+        long,
+        num_args = 0..=1,
+        default_missing_value = DEFAULT_UPDATE_QUESTIONS
+    )]
+    replace_questions: Option<bool>,
+}
+
+pub fn replace_questions() -> bool {
+    let args = Cli::parse();
+
+    let mut replace_questions: bool = false;
+    match args.replace_questions {
+        Some(s) => {
+            replace_questions = s;
+        }
+        None => (),
+    }
+
+    replace_questions
 }
 
 pub fn parse_days_before() -> i64 {
