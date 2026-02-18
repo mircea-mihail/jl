@@ -8,17 +8,17 @@ Everything is stored locally, so your data is as safe as your computer.
 
 ## Installation Guide
 
-To install **jrl** locally run the first command, and to also install the binaries in /usr/local/bin run the second:
+To install **jrl** locally you can run:
 
 ```bash
-$ make install-user
-$ sudo make install-bin
+$ cargo install jrl
 ```
+Or just copy the executable to /usr/local/bin.
 
-To uninstall it:
+In order to replace the quesitons file used for prompts, create a questions.txt file in the current directory using the template provided in the repository, using the flags s: for short questions and l: for long ones, and run 
 
 ```bash
-sudo make uninstall
+$ jrl --install-questions
 ```
 
 ---
