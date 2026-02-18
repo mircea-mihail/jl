@@ -74,13 +74,15 @@ fn main() -> rustyline::Result<()> {
     this_dir_questions_path.push("./");
     this_dir_questions_path.push(   QUESTION_FILE_NAME);
 
-    if cli::replace_questions() {
+    if cli::install_questions() {
         if this_dir_questions_path.exists(){ 
             fs::copy(&this_dir_questions_path, &questions_file_path)?;
-            println!("Succesfully replaced the questions.txt file")
+            println!("Succesfully installed the questions.txt file");
+            return Ok(());
         }
         else {
             println!("No quesions.txt file in the current directory");
+            return Ok(());
         }
     }
     if !questions_file_path.exists() {

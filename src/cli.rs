@@ -68,27 +68,27 @@ pub struct Cli {
     #[arg(short, long, num_args = 1)]
     update: Option<i64>,
 
-    /// Replace the .jrl/questions.txt file with the questions.txt file from the current directory
+    /// Use the questions from the questions.txt file in the current directory
     #[arg (
         long,
         num_args = 0..=1,
         default_missing_value = DEFAULT_UPDATE_QUESTIONS
     )]
-    replace_questions: Option<bool>,
+    install_questions: Option<bool>,
 }
 
-pub fn replace_questions() -> bool {
+pub fn install_questions() -> bool {
     let args = Cli::parse();
 
-    let mut replace_questions: bool = false;
-    match args.replace_questions {
+    let mut install_questions: bool = false;
+    match args.install_questions {
         Some(s) => {
-            replace_questions = s;
+            install_questions = s;
         }
         None => (),
     }
 
-    replace_questions
+    install_questions
 }
 
 pub fn parse_days_before() -> i64 {
