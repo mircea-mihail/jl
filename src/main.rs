@@ -4,8 +4,8 @@
 // make cursor different in insert and normal mode (| for insert, box for insert)
 //
 // use flags to input things:
-//      jl -w to show week notes
-//      jl -m to show months notes highlights
+//      jrl -w to show week notes
+//      jrl -m to show months notes highlights
 //      show a table/graph for short questions for the week
 //      and maybe something interactive with browsing longer notes/ a compilation of notes?
 
@@ -25,7 +25,7 @@ use std::fs::OpenOptions;
 
 use crate::cli::parse_days_before;
 
-const JL_DIR_NAME: &str = ".jl";
+const JRL_DIR_NAME: &str = ".jrl";
 const QUESTION_FILE_NAME: &str = "questions.txt";
 
 use crossterm::{execute, terminal};
@@ -33,11 +33,11 @@ use rustyline::error::ReadlineError;
 use std::io;
 
 fn main() -> rustyline::Result<()> {
-    let mut jl_dir_path = home::home_dir().expect("Could not find home directory");
-    jl_dir_path.push(JL_DIR_NAME);
+    let mut jrl_dir_path = home::home_dir().expect("Could not find home directory");
+    jrl_dir_path.push(JRL_DIR_NAME);
 
     if cli::show_entries() {
-        match loops::view_files(&jl_dir_path) {
+        match loops::view_files(&jrl_dir_path) {
             Ok(_) => {
                 return Ok(());
             }
@@ -56,12 +56,12 @@ fn main() -> rustyline::Result<()> {
     let days_before_today: i64 = parse_days_before();
 
     let today_file = utility::get_day_file_name(days_before_today);
-    let today_file_path = jl_dir_path.join(&today_file);
-    let questions_file_path = jl_dir_path.join(QUESTION_FILE_NAME);
+    let today_file_path = jrl_dir_path.join(&today_file);
+    let questions_file_path = jrl_dir_path.join(QUESTION_FILE_NAME);
 
     let mut write_question_gap = true;
 
-    if !file_parsing::exists_today_file(&jl_dir_path, &today_file)? {
+    if !file_parsing::exists_today_file(&jrl_dir_path, &today_file)? {
         fs::write(&today_file_path, "")?;
         write_question_gap = false;
     }
@@ -69,16 +69,25 @@ fn main() -> rustyline::Result<()> {
         write_question_gap = false;
     }
 
-    // copy current dir questions file in ~/.jl folder or create an empty one otherwise if not existing there
+    // copy current dir questions file in ~/.jrl folder or create an empty one otherwise if not existing there
     let mut this_dir_questions_path = PathBuf::new();
     this_dir_questions_path.push("./");
     this_dir_questions_path.push(   QUESTION_FILE_NAME);
 
-    if this_dir_questions_path.exists(){ 
-        fs::copy(&this_dir_questions_path, &questions_file_path)?;
+    if cli::replace_questions() {
+        if this_dir_questions_path.exists(){ 
+            fs::copy(&this_dir_questions_path, &questions_file_path)?;
+            println!("Succesfully replaced the questions.txt file")
+        }
+        else {
+            println!("No quesions.txt file in the current directory");
+        }
     }
-    else {
-        if !questions_file_path.exists() {
+    if !questions_file_path.exists() {
+        if this_dir_questions_path.exists(){ 
+            fs::copy(&this_dir_questions_path, &questions_file_path)?;
+        }
+        else {
             fs::write(
                 &questions_file_path,
                 "l: Long question\ns: Short question\n",

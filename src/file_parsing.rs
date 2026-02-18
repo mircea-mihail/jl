@@ -48,7 +48,7 @@ pub fn get_question(questions_path: &Path) -> io::Result<Question> {
     let hashed_string = format!("{:032x}", hash)[..15].to_string();
 
     let jumbled_questions_path = std::path::PathBuf::from("/tmp")
-        .join("jl-".to_string() + &hashed_string + "-" + &utility::get_day_file_name(0));
+        .join("jrl-".to_string() + &hashed_string + "-" + &utility::get_day_file_name(0));
 
     if !jumbled_questions_path.exists() {
         fs::write(&jumbled_questions_path, "")?;
@@ -92,18 +92,18 @@ pub fn get_question(questions_path: &Path) -> io::Result<Question> {
         .into())
 }
 
-pub fn exists_today_file(jl_dir_path: &Path, today_file: &String) -> io::Result<bool> {
-    let today_file_path = jl_dir_path.join(&today_file);
+pub fn exists_today_file(jrl_dir_path: &Path, today_file: &String) -> io::Result<bool> {
+    let today_file_path = jrl_dir_path.join(&today_file);
 
-    if !jl_dir_path.is_dir() {
-        match fs::create_dir(jl_dir_path) {
+    if !jrl_dir_path.is_dir() {
+        match fs::create_dir(jrl_dir_path) {
             Ok(()) => (),
             Err(e) => println!("error: {}", e),
         }
     }
 
-    if jl_dir_path.is_dir() {
-        for entry in fs::read_dir(jl_dir_path)? {
+    if jrl_dir_path.is_dir() {
+        for entry in fs::read_dir(jrl_dir_path)? {
             let entry = entry?;
             let path = entry.path();
 

@@ -62,8 +62,8 @@ pub fn get_input(
     Ok(())
 }
 
-pub fn view_files(jl_dir_path: &std::path::PathBuf) -> io::Result<()> {
-    let dir_files = fs::read_dir(jl_dir_path)?;
+pub fn view_files(jrl_dir_path: &std::path::PathBuf) -> io::Result<()> {
+    let dir_files = fs::read_dir(jrl_dir_path)?;
     let mut journal_paths: Vec<std::path::PathBuf> = Vec::new();
     for file in dir_files {
         let path = file?.path();
