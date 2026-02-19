@@ -1,6 +1,6 @@
-# jl
+# jrl
 
-**jl** is a terminal-based journaling app for taking notes, writing descriptions, rating your day, and answering prompts.
+**jrl** is a terminal-based journaling app for taking notes, writing descriptions, rating your day, and answering prompts.
 
 Everything is stored locally, so your data is as safe as your computer.
 
@@ -8,17 +8,17 @@ Everything is stored locally, so your data is as safe as your computer.
 
 ## Installation Guide
 
-To install **jl** locally run the first command, and to also install the binaries in /usr/local/bin run the second:
+To install **jrl** locally you can run:
 
 ```bash
-$ make install-user
-$ sudo make install-bin
+$ cargo install jrl
 ```
+Or just copy the executable to /usr/local/bin.
 
-To uninstall it:
+In order to replace the quesitons file used for prompts, create a questions.txt file in the current directory using the template provided in the repository, using the flags s: for short questions and l: for long ones, and run 
 
 ```bash
-sudo make uninstall
+$ jrl --install-questions
 ```
 
 ---
@@ -26,7 +26,7 @@ sudo make uninstall
 ## Usage
 
 ```bash
-jl [OPTIONS]
+jrl [OPTIONS]
 ```
 
 ---
@@ -50,23 +50,23 @@ jl [OPTIONS]
 Most flags work either by providing the argument immediately after the flag, or by entering the flag alone and typing your input on the following lines.
 
 ```
-$ jl -d "Today was productive and calm"
+$ jrl -d "Today was productive and calm"
 
-$ jl -d
+$ jrl -d
 Add a description about the day:
 >> Loved how everything just felt right today
 >> met my friends at the bar and we had so much fun 
 
-$ jl -n "i'm at home and i feel so boared, just want to lay down and do nothing all day"
+$ jrl -n "i'm at home and i feel so boared, just want to lay down and do nothing all day"
 
-$ jl -r 8
+$ jrl -r 8
 
-$ jl -u 2
+$ jrl -u 2
 ```
 
 ## Questions file
 
-This file contains all the questions you want to be asked when calling jl or when doing jl -s in your bashrc. The short questions are meant to be answered with numbers or short text, while the long ones expect a multi line answer. One example of a question file I currently use is the one below, mostly tracking health habits I'm currently interested in. Place this file in the ~/.jl directory.
+This file contains all the questions you want to be asked when calling jrl or when doing jrl -s in your bashrc. The short questions are meant to be answered with numbers or short text, while the long ones expect a multi line answer. One example of a question file I currently use is the one below, mostly tracking health habits I'm currently interested in. Place this file in the ~/.jrl directory.
 
 ```
 s: Number of coffees? 
