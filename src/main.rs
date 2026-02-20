@@ -74,10 +74,17 @@ fn main() -> rustyline::Result<()> {
     this_dir_questions_path.push("./");
     this_dir_questions_path.push(   QUESTION_FILE_NAME);
 
+    let tmp_file = file_parsing::generate_jumbled_questions_file_name();
+
     if cli::install_questions() {
         if this_dir_questions_path.exists(){ 
             fs::copy(&this_dir_questions_path, &questions_file_path)?;
             println!("Succesfully installed the questions.txt file");
+
+            if tmp_file.exists() {
+                std::fs::remove_file(tmp_file)?;
+            }
+ 
             return Ok(());
         }
         else {
@@ -95,6 +102,10 @@ fn main() -> rustyline::Result<()> {
                 "l: Long question\ns: Short question\n",
             )
             .expect("Failed to create question file\n");
+        }
+
+        if tmp_file.exists() {
+            std::fs::remove_file(tmp_file)?;
         }
     }
 
