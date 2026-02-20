@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use std::fs;
 use std::fs::OpenOptions;
@@ -43,12 +43,18 @@ fn generate_jumbled_questions_file(
     return Ok(());
 }
 
-pub fn get_question(questions_path: &Path) -> io::Result<Question> {
+pub fn generate_jumbled_questions_file_name() -> PathBuf{
     let hash = xxh3_128(&utility::get_day_file_name(0).as_bytes());
     let hashed_string = format!("{:032x}", hash)[..15].to_string();
 
-    let jumbled_questions_path = std::path::PathBuf::from("/tmp")
+    let file_name: PathBuf = std::path::PathBuf::from("/tmp")
         .join("jrl-".to_string() + &hashed_string + "-" + &utility::get_day_file_name(0));
+
+    file_name
+}
+
+pub fn get_question(questions_path: &Path) -> io::Result<Question> {
+    let jumbled_questions_path = generate_jumbled_questions_file_name();
 
     if !jumbled_questions_path.exists() {
         fs::write(&jumbled_questions_path, "")?;
